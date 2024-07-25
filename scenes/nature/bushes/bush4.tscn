@@ -1,0 +1,78 @@
+[gd_scene load_steps=13 format=3 uid="uid://cm10fntgojxg5"]
+
+[ext_resource type="PackedScene" uid="uid://dbbwoxkti7h4e" path="res://assets/nature/bush4/nature.glb" id="1_pf7eb"]
+[ext_resource type="Shader" path="res://addons/Imposter/imposter/materials/shaders/ImpostorShader.gdshader" id="2_gkdpp"]
+[ext_resource type="Texture2D" uid="uid://qvtav4hmhg5l" path="res://impostor/nature/bush4/base_HedgeSmall_albedo.png" id="3_merb0"]
+[ext_resource type="Texture2D" uid="uid://5c4tm6rrcrkv" path="res://impostor/nature/bush4/base_HedgeSmall_depth.png" id="4_qqd4y"]
+[ext_resource type="Texture2D" uid="uid://dma6jgkacx5us" path="res://impostor/nature/bush4/base_HedgeSmall_normal.png" id="5_jihvi"]
+[ext_resource type="Texture2D" uid="uid://btts7c0toe62n" path="res://impostor/nature/bush4/base_HedgeSmall_orm.png" id="6_aekop"]
+[ext_resource type="Shader" path="res://addons/Imposter/imposter/materials/shaders/ImpostorShaderShadows.gdshader" id="7_qjqia"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_n8gmo"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_sal1j"]
+render_priority = 0
+shader = ExtResource("2_gkdpp")
+shader_parameter/albedo = Color(1, 1, 1, 1)
+shader_parameter/specular = 0.5
+shader_parameter/metallic = 1.0
+shader_parameter/roughness = 1.0
+shader_parameter/imposterFrames = Vector2(16, 16)
+shader_parameter/positionOffset = Vector3(0.00150651, 0.500098, -0.00597543)
+shader_parameter/isFullSphere = false
+shader_parameter/alpha_clamp = 0.5
+shader_parameter/dither = false
+shader_parameter/scale = 1.40167
+shader_parameter/depth_scale = 0.0
+shader_parameter/normalmap_depth = 1.0
+shader_parameter/aabb_max = 1.0
+shader_parameter/imposterTextureAlbedo = ExtResource("3_merb0")
+shader_parameter/imposterTextureNormal = ExtResource("5_jihvi")
+shader_parameter/imposterTextureDepth = ExtResource("4_qqd4y")
+shader_parameter/imposterTextureOrm = ExtResource("6_aekop")
+
+[sub_resource type="QuadMesh" id="QuadMesh_ay3xs"]
+material = SubResource("ShaderMaterial_sal1j")
+custom_aabb = AABB(-0.808816, -0.803225, -0.815675, 2.42645, 2.40967, 2.44703)
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_irn5p"]
+render_priority = 0
+shader = ExtResource("7_qjqia")
+shader_parameter/albedo = Color(1, 1, 1, 1)
+shader_parameter/specular = 0.5
+shader_parameter/metallic = 0.0
+shader_parameter/roughness = 1.0
+shader_parameter/imposterFrames = Vector2(16, 16)
+shader_parameter/positionOffset = Vector3(0.00150651, 0.500098, -0.00597543)
+shader_parameter/isFullSphere = false
+shader_parameter/alpha_clamp = 0.5
+shader_parameter/scale = 1.40167
+shader_parameter/depth_scale = 0.0
+shader_parameter/aabb_max = -0.700835
+shader_parameter/imposterTextureAlbedo = ExtResource("3_merb0")
+
+[sub_resource type="QuadMesh" id="QuadMesh_802ku"]
+material = SubResource("ShaderMaterial_irn5p")
+custom_aabb = AABB(-0.808816, -0.803225, -0.815675, 2.42645, 2.40967, 2.44703)
+
+[node name="nature" instance=ExtResource("1_pf7eb")]
+
+[node name="HedgeSmall" parent="." index="0"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+visibility_range_end = 15.0
+
+[node name="StaticBody3D" type="StaticBody3D" parent="HedgeSmall" index="0"]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="HedgeSmall/StaticBody3D" index="0"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.604191, 0)
+shape = SubResource("BoxShape3D_n8gmo")
+
+[node name="mesh-impostor" type="MeshInstance3D" parent="." index="1"]
+cast_shadow = 0
+visibility_range_begin = 12.0
+mesh = SubResource("QuadMesh_ay3xs")
+
+[node name="shadow-impostor" type="MeshInstance3D" parent="." index="2"]
+cast_shadow = 3
+visibility_range_begin = 12.0
+mesh = SubResource("QuadMesh_802ku")

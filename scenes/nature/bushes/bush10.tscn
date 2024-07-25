@@ -1,0 +1,9 @@
+[gd_scene load_steps=2 format=3 uid="uid://noo7aitsl8mo"]
+
+[ext_resource type="PackedScene" uid="uid://uay7rv6hsyo5" path="res://assets/nature/bush10/nature.glb" id="1_aptpj"]
+
+[node name="nature" instance=ExtResource("1_aptpj")]
+
+[node name="bush_02" parent="." index="0"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+visibility_range_end = 25.0

@@ -1,0 +1,8 @@
+[gd_scene load_steps=2 format=3 uid="uid://co4vyahojmr05"]
+
+[ext_resource type="AudioStream" uid="uid://wq5xmh2430ar" path="res://assets/audio/sounds/mixkit-game-gun-shot-1662.mp3" id="1_i88yn"]
+
+[node name="SoundEffects" type="Node3D"]
+
+[node name="Shoot" type="AudioStreamPlayer3D" parent="."]
+stream = ExtResource("1_i88yn")

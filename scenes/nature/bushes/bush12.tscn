@@ -1,0 +1,17 @@
+[gd_scene load_steps=3 format=3 uid="uid://byp3k86apjaxe"]
+
+[ext_resource type="PackedScene" uid="uid://dk1wgtn0h8gb5" path="res://assets/nature/bush12/nature.glb" id="1_7n7c5"]
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_ggcui"]
+
+[node name="nature" instance=ExtResource("1_7n7c5")]
+
+[node name="branches" parent="." index="0"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+visibility_range_end = 40.0
+
+[node name="StaticBody3D" type="StaticBody3D" parent="branches" index="0"]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="branches/StaticBody3D" index="0"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.414016, 0)
+shape = SubResource("SphereShape3D_ggcui")

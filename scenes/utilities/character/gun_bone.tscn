@@ -1,0 +1,9 @@
+[gd_scene format=3 uid="uid://d06o5qvd6pfhk"]
+
+[node name="GunBone" type="BoneAttachment3D"]
+transform = Transform3D(-0.0714213, 0.0898562, 0.993391, 0.0987429, -0.990405, 0.0966855, 0.992547, 0.104996, 0.0618632, -0.209262, 0.790686, 0.0551688)
+bone_name = "RightHand"
+bone_idx = 37
+
+[node name="ShootFrom" type="Node3D" parent="."]
+transform = Transform3D(1, -1.49012e-08, 3.25963e-09, 8.19564e-08, 0.965889, -0.258954, -1.21072e-08, 0.258954, 0.965889, 0.0123583, 0.0670063, 0.0418727)

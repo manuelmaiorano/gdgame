@@ -1,0 +1,78 @@
+[gd_scene load_steps=13 format=3 uid="uid://dsmweci4w1u4r"]
+
+[ext_resource type="PackedScene" uid="uid://c6ukaqrnhh5mk" path="res://assets/nature/rock8/nature.glb" id="1_ecvlk"]
+[ext_resource type="Shader" path="res://addons/Imposter/imposter/materials/shaders/ImpostorShader.gdshader" id="2_xlrhm"]
+[ext_resource type="Texture2D" uid="uid://cipdtltmqtu62" path="res://impostor/nature/rock8/base_rock_031_albedo.png" id="3_dfwjl"]
+[ext_resource type="Texture2D" uid="uid://cry311trgwhq5" path="res://impostor/nature/rock8/base_rock_031_depth.png" id="4_7phs7"]
+[ext_resource type="Texture2D" uid="uid://b1vghvbukonfm" path="res://impostor/nature/rock8/base_rock_031_normal.png" id="5_i7lh7"]
+[ext_resource type="Texture2D" uid="uid://bpu4jpueisfx1" path="res://impostor/nature/rock8/base_rock_031_orm.png" id="6_2aqwb"]
+[ext_resource type="Shader" path="res://addons/Imposter/imposter/materials/shaders/ImpostorShaderShadows.gdshader" id="7_ekpn2"]
+
+[sub_resource type="ConvexPolygonShape3D" id="ConvexPolygonShape3D_xvplc"]
+points = PackedVector3Array(-4.199, 3.51936, 1.82759, -4.5076, 0.856006, -2.88627, -4.92387, 0.852911, -2.78926, -1.02955, 0.0440945, 1.5132, 0.53877, 3.01523, -1.76814, -5.54828, 3.83732, -2.17717, -5.3237, 0.141196, 0.801988, 0.0125757, 0.130255, -2.17556, -1.44603, 3.60662, 1.60173, 0.218328, 0.747887, 1.42669, -5.76693, 2.49946, 1.54052, -5.52236, 0.0437688, -1.54941, -0.950636, 1.17838, -2.84618, -3.87695, 3.90561, -2.34935, -0.497928, 3.01348, 1.84305, -1.75245, 4.00864, -0.0225594, -5.84537, 3.93352, -1.14394, -4.295, 0.24937, 1.51156, 0.315817, 3.31832, -0.0150227, -5.97744, 3.01779, -2.18549, -4.19542, 0.144025, -2.67446, -5.62561, 3.71986, 0.901774, -0.00164539, 0.0383569, 0.904925, -5.77148, 0.635909, -1.77205, -2.15541, 3.91565, 1.30196, -0.819386, 0.549358, -2.88483, 0.642796, 2.49914, -1.04495, -0.927358, 0.0435321, -2.36675, 0.344368, 0.945635, -2.08401, -0.740826, 3.40027, -1.94541, -5.53415, 0.0355593, -0.323572, -4.81637, 3.93142, -2.37447)
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_qvpia"]
+render_priority = 0
+shader = ExtResource("2_xlrhm")
+shader_parameter/albedo = Color(1, 1, 1, 1)
+shader_parameter/specular = 0.5
+shader_parameter/metallic = 0.0
+shader_parameter/roughness = 1.0
+shader_parameter/imposterFrames = Vector2(16, 16)
+shader_parameter/positionOffset = Vector3(-2.66325, 2.04928, -0.536625)
+shader_parameter/isFullSphere = false
+shader_parameter/alpha_clamp = 0.5
+shader_parameter/dither = false
+shader_parameter/scale = 4.6343
+shader_parameter/depth_scale = 0.0
+shader_parameter/normalmap_depth = 1.0
+shader_parameter/aabb_max = 1.0
+shader_parameter/imposterTextureAlbedo = ExtResource("3_dfwjl")
+shader_parameter/imposterTextureNormal = ExtResource("5_i7lh7")
+shader_parameter/imposterTextureDepth = ExtResource("4_7phs7")
+shader_parameter/imposterTextureOrm = ExtResource("6_2aqwb")
+
+[sub_resource type="QuadMesh" id="QuadMesh_8r65j"]
+material = SubResource("ShaderMaterial_qvpia")
+custom_aabb = AABB(-3.38354, -2.05575, -2.40879, 10.1506, 6.16726, 7.22636)
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_wlw86"]
+render_priority = 0
+shader = ExtResource("7_ekpn2")
+shader_parameter/albedo = Color(1, 1, 1, 1)
+shader_parameter/specular = 0.5
+shader_parameter/metallic = 0.0
+shader_parameter/roughness = 1.0
+shader_parameter/imposterFrames = Vector2(16, 16)
+shader_parameter/positionOffset = Vector3(-2.66325, 2.04928, -0.536625)
+shader_parameter/isFullSphere = false
+shader_parameter/alpha_clamp = 0.5
+shader_parameter/scale = 4.6343
+shader_parameter/depth_scale = 0.0
+shader_parameter/aabb_max = -2.31715
+shader_parameter/imposterTextureAlbedo = ExtResource("3_dfwjl")
+
+[sub_resource type="QuadMesh" id="QuadMesh_5r61x"]
+material = SubResource("ShaderMaterial_wlw86")
+custom_aabb = AABB(-3.38354, -2.05575, -2.40879, 10.1506, 6.16726, 7.22636)
+
+[node name="nature" instance=ExtResource("1_ecvlk")]
+
+[node name="rock_031" parent="." index="0"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+visibility_range_end = 25.0
+
+[node name="StaticBody3D" type="StaticBody3D" parent="rock_031" index="0"]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="rock_031/StaticBody3D" index="0"]
+shape = SubResource("ConvexPolygonShape3D_xvplc")
+
+[node name="mesh-impostor" type="MeshInstance3D" parent="." index="1"]
+cast_shadow = 0
+visibility_range_begin = 22.0
+mesh = SubResource("QuadMesh_8r65j")
+
+[node name="shadow-impostor" type="MeshInstance3D" parent="." index="2"]
+cast_shadow = 3
+visibility_range_begin = 22.0
+mesh = SubResource("QuadMesh_5r61x")

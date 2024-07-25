@@ -1,0 +1,18 @@
+[gd_scene load_steps=3 format=3 uid="uid://efx5ga8456cb"]
+
+[ext_resource type="PackedScene" uid="uid://yvc655htj65w" path="res://assets/nature/rock1/nature.glb" id="1_31ikl"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_bdgau"]
+size = Vector3(0.854004, 0.503357, 0.810486)
+
+[node name="nature" instance=ExtResource("1_31ikl")]
+
+[node name="rock_030" parent="." index="0"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+visibility_range_end = 40.0
+
+[node name="StaticBody3D" type="StaticBody3D" parent="rock_030" index="0"]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="rock_030/StaticBody3D" index="0"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.0305176, 0.0704651, -0.0391541)
+shape = SubResource("BoxShape3D_bdgau")

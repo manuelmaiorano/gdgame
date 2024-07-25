@@ -1,0 +1,22 @@
+[gd_scene load_steps=3 format=3 uid="uid://dtxbbw4r1c2h1"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_rkxc8"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_5hquq"]
+size = Vector3(20, 2, 20)
+
+[node name="InteractionAreas" type="Node3D"]
+
+[node name="CloseInteraction" type="Area3D" parent="."]
+collision_layer = 2
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="CloseInteraction"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.943357, 0)
+shape = SubResource("BoxShape3D_rkxc8")
+
+[node name="FarInteraction" type="Area3D" parent="."]
+monitorable = false
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="FarInteraction"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.957161, 0)
+shape = SubResource("BoxShape3D_5hquq")
