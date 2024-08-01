@@ -60,7 +60,7 @@ custom_aabb = AABB(-13.4526, -13.5607, -12.0199, 40.3579, 40.6822, 36.0596)
 
 [node name="mesh-impostor" type="MeshInstance3D" parent="."]
 cast_shadow = 0
-visibility_range_begin = 32.0
+visibility_range_begin = 100.0
 mesh = SubResource("QuadMesh_sfwpu")
 
 [node name="tree_016" type="MeshInstance3D" parent="mesh-impostor"]
@@ -77,5 +77,5 @@ shape = SubResource("CapsuleShape3D_1hdsd")
 
 [node name="shadow-impostor" type="MeshInstance3D" parent="."]
 cast_shadow = 3
-visibility_range_begin = 32.0
+visibility_range_begin = 100.0
 mesh = SubResource("QuadMesh_78vly")

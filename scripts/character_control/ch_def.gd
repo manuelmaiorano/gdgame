@@ -61,7 +61,7 @@ class ActionInfoList:
 	var player_action_id
 	var desc
 @onready var objects_to_actions: Dictionary = {}
-@onready var all_actions: Array[ActionInfoList] = []
+@onready var close_objects: Array[ActionInfoList] = []
 @onready var far_objects: Dictionary = {}
 
 @onready var controlled_by_player = true
@@ -102,7 +102,7 @@ func _physics_process(delta: float):
 			animate(current_animation, delta)
 	else:
 		if should_update_ai():
-			agent_input = $AI.get_next_actions(far_objects, all_actions, reached, agent_input.motion, current_car)
+			agent_input = $AI.get_next_actions(position, far_objects, close_objects, reached, agent_input.motion, current_car)
 		if agent_input.going:
 			set_movement_target(agent_input.next_pos)
 			$Control/Label.text = "%f \n %f \n %f" % [agent_input.next_pos.x, agent_input.next_pos.y, agent_input.next_pos.z]
@@ -279,7 +279,7 @@ func _process(delta):
 	
 	if agent_input.action_id > 0:
 		#do_action_by_number(agent_input.action_id)
-		do_action_by_number_list(agent_input.action_id-1)
+		do_action_by_number_list(agent_input.action_id)
 		
 func execute_action(action_info: ActionInfoList):
 	var object = action_info.object
@@ -362,8 +362,8 @@ func do_action_by_number(num):
 	
 	
 func do_action_by_number_list(num):
-	if num < all_actions.size():
-		execute_action(all_actions[num])
+	if num < close_objects.size():
+		execute_action(close_objects[num])
 	
 func update_action_labels():
 	var i := 0
@@ -377,8 +377,8 @@ func update_action_labels():
 			
 func update_action_labels_list():
 	action_label.clear()
-	for action_info_idx in all_actions.size():
-		var action_info = all_actions[action_info_idx]
+	for action_info_idx in close_objects.size():
+		var action_info = close_objects[action_info_idx]
 		action_label.append_text("%d : %s \n" % [action_info_idx+1, action_info.desc])
 		
 		
@@ -404,7 +404,7 @@ func _on_actions_update(object):
 		action_info_list.player_action_id = object.get_player_action(action)
 		action_info_list.object_action_id = action
 		
-		all_actions.push_back(action_info_list)
+		close_objects.push_back(action_info_list)
 		
 	update_action_labels_list()
 	
@@ -468,16 +468,16 @@ func schedule_ragdoll_end():
 	
 func remove_object_from_action_list(object):
 	var index_to_remove = []
-	for action_info_idx in all_actions.size():
-		var action_info = all_actions[action_info_idx]
+	for action_info_idx in close_objects.size():
+		var action_info = close_objects[action_info_idx]
 		if action_info.object == object:
 			index_to_remove.push_back(action_info_idx)
 	
-	var new_all_actions: Array[ActionInfoList] = []
-	for action_info_idx in all_actions.size():
+	var new_close_objects: Array[ActionInfoList] = []
+	for action_info_idx in close_objects.size():
 		if index_to_remove.find(action_info_idx) == -1:
-			new_all_actions.push_back(all_actions[action_info_idx])
-	all_actions = new_all_actions
+			new_close_objects.push_back(close_objects[action_info_idx])
+	close_objects = new_close_objects
 
 func should_update_ai():
 	if ai_counter > AI_RATE:

@@ -60,7 +60,7 @@ custom_aabb = AABB(-2.79867, -1.28476, -1.85477, 8.39601, 3.85427, 5.5643)
 
 [node name="rock_035" parent="." index="0"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
-visibility_range_end = 25.0
+visibility_range_end = 52.0
 
 [node name="StaticBody3D" type="StaticBody3D" parent="rock_035" index="0"]
 
@@ -69,10 +69,10 @@ shape = SubResource("ConvexPolygonShape3D_4nxx0")
 
 [node name="mesh-impostor" type="MeshInstance3D" parent="." index="1"]
 cast_shadow = 0
-visibility_range_begin = 22.0
+visibility_range_begin = 50.0
 mesh = SubResource("QuadMesh_43kfm")
 
 [node name="shadow-impostor" type="MeshInstance3D" parent="." index="2"]
 cast_shadow = 3
-visibility_range_begin = 22.0
+visibility_range_begin = 50.0
 mesh = SubResource("QuadMesh_gsm3f")

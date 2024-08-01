@@ -32,6 +32,13 @@ func get_action_description(action: ACTION):
 		ACTION.SIT: return "Sit Down"
 		ACTION.STAND: return "Stand Up"
 		
+func get_action_adv(action: ACTION):
+	var adv = GLOBAL_DEFINITIONS.ObjectAdvertisement.new()
+	match action:
+		ACTION.SIT: adv.comfort += 0.5
+		ACTION.STAND: adv.comfort -= 0.5
+	return adv
+		
 func act(action: ACTION):
 	match action:
 		ACTION.SIT: sit()

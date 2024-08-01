@@ -21,3 +21,16 @@ class AgentInput:
 	
 class AgentPerceptions:
 	var actions: Array
+	
+
+class ObjectAdvertisement:
+	#physical
+	var hunger: float
+	var comfort: float
+	var hygiene: float
+	var bladder: float
+	#mental
+	var energy: float
+	var fun: float
+	var social: float
+	var room: float
