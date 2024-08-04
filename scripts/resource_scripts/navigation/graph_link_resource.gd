@@ -1,7 +1,7 @@
 extends Resource
 class_name LocationGraphLink
 
-enum CROSSING_RULE {DOOR, CROSSWALK}
+enum CROSSING_RULE {OPEN, DOOR, CROSSWALK}
 
 
 @export var dest_name: String

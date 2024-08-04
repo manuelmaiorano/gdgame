@@ -100,17 +100,59 @@ func recursive_find_node_from_name(node: LocationHierarchyNode, location_name: S
 		return recursive_find_node_from_name(child, location_name)
 
 	return null
+	
+enum StepType {GOTO, LINK_ACTION}
+
+class NavigationPlanStep:
+	var step_type: StepType
+	var end_position: Vector3
+	
+	
 
 func plan_navigation(start_position: Vector3, end_position: Vector3):
 	var start_node = get_node_from_position(start_position)
 	var end_node = get_node_from_position(end_position)
 
-	var path = find_path_in_hierarchy(start_node, end_node)
+	var lca = LocationHierarchyNode.new()
+	var hierarchy_path = find_path_in_hierarchy(start_node, end_node, lca)
+
+	var full_path: Array[NavigationPlanStep] = []
+
+	#find index of lca
+	var lca_idx = -1
+	for idx in hierarchy_path.size():
+		var elem = hierarchy_path[idx]
+		if elem == lca:
+			lca_idx = idx
+			break
+
+	for idx in hierarchy_path.size():
+		var elem = hierarchy_path[idx]
+		if idx == hierarchy_path.size() - 1:
+			break
+		if elem == lca:
+			continue
+		if hierarchy_path[idx+1] == lca:
+			var partial_path = search_graph(elem.graph, elem.name, hierarchy_path[idx +2].name)
+			full_path.append_array(partial_path)
+		else:
+			if idx < lca_idx:
+				var partial_path = search_graph(elem.graph, elem.name, LocationGraph.OUT_NODE_NAME)
+				full_path.append_array(partial_path)
+			else:
+				var partial_path = search_graph(hierarchy_path[idx +1].graph, LocationGraph.OUT_NODE_NAME, hierarchy_path[idx +1].name)
+				full_path.append_array(partial_path)
+
+	return full_path
+
+	
+	
 	
 
 
-func find_path_in_hierarchy(start_node: LocationHierarchyNode, end_node: LocationHierarchyNode):
+func find_path_in_hierarchy(start_node: LocationHierarchyNode, end_node: LocationHierarchyNode, lca_out: LocationHierarchyNode) -> Array[LocationHierarchyNode]:
 	var lca = LCA(start_node, end_node)
+	lca_out = lca
 	var path = []
 	var a = start_node
 	var b = end_node
@@ -151,6 +193,25 @@ func LCA(node_a: LocationHierarchyNode, node_b: LocationHierarchyNode):
 
 
 
-func search_graph(start: String, end: String, graph: LocationGraph):
-	pass
+func search_graph(graph: LocationGraph, start: String, end: String) -> Array[NavigationPlanStep]:
+	return []
+
+
+# func dfs_search(vis: Dictionary, x, y, stack):
+# 	stack.append(x)
+# 	if x == y:
+ 
+# 		printPath(stack)
+# 		return
+# 	vis.has(x)
+ 
+#     # if backtracking is taking place
+ 
+# 	for j in v[x]:
+             
+#             # if the node is not visited
+# 	if (vis[j] == False):
+# 		DFS(vis, j, y, stack)
+        
+# 	del stack[-1]
 	
