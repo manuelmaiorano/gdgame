@@ -1,0 +1,8 @@
+[gd_scene load_steps=3 format=3 uid="uid://g8r2exbbfwtn"]
+
+[ext_resource type="Script" path="res://scripts/location_manager.gd" id="1_vxna4"]
+[ext_resource type="Resource" uid="uid://djvndmw6t6uq3" path="res://resources/navigation/locations.tres" id="2_0cckq"]
+
+[node name="Locations" type="Node"]
+script = ExtResource("1_vxna4")
+location_hierarchy = ExtResource("2_0cckq")

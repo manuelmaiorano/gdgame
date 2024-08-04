@@ -1,5 +1,5 @@
 extends Node3D
-
+class_name Door
 signal state_changed(me)
 
 @export var locked = false

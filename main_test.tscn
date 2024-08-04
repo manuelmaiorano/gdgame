@@ -1,10 +1,9 @@
-[gd_scene load_steps=18 format=3 uid="uid://d1f1e1q7cgm2h"]
+[gd_scene load_steps=17 format=3 uid="uid://d1f1e1q7cgm2h"]
 
 [ext_resource type="PackedScene" uid="uid://ccdjbgkyqnwqx" path="res://scenes/characters/ch_def_1.tscn" id="1_1wve5"]
 [ext_resource type="PackedScene" uid="uid://ggeqfabicn0c" path="res://scenes/props/weapons/pistol.tscn" id="13_tn7gx"]
 [ext_resource type="AudioStream" uid="uid://p8qb3uita3wr" path="res://assets/audio/music/ethereal-vistas-191254.mp3" id="16_6n8ed"]
 [ext_resource type="PackedScene" uid="uid://bpyqiq17rrev4" path="res://scenes/debug/debug_view.tscn" id="17_707by"]
-[ext_resource type="PackedScene" uid="uid://c7d8h78nwsmml" path="res://scenes/characters/ch_def_2.tscn" id="17_vcjcf"]
 [ext_resource type="PackedScene" uid="uid://bw276s7bov1ow" path="res://scenes/cars/police_car.tscn" id="18_vga5r"]
 
 [sub_resource type="NavigationMesh" id="NavigationMesh_l25qt"]
@@ -164,9 +163,6 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -13.335, 8.54619, 20.5061)
 
 [node name="Location2" type="Node3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.85895, 1.74621, 3.4478)
-
-[node name="ch_def2" parent="." instance=ExtResource("17_vcjcf")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.26531, -0.303749, 1.57623)
 
 [node name="Location3" type="Node3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.88406, -0.0205148, 4.79001)

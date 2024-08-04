@@ -28,7 +28,6 @@ var motion = Vector2()
 @onready var player_model = $Human_rig
 @onready var action_label = $ControllablePlayer/UI/Actions/RichTextLabel
 @onready var close_interaction_area = $InteractionAreas/CloseInteraction
-@onready var far_interaction_area = $InteractionAreas/FarInteraction
 @onready var navigation_agent: NavigationAgent3D = $NavigationAgent3D
 
 
@@ -52,17 +51,13 @@ var motion = Vector2()
 @onready var agent_input = GLOBAL_DEFINITIONS.AgentInput.new()
 
 class ActionInfo:
-	var object_action_id
-	var player_action_id
-	var desc
-class ActionInfoList:
 	var object
 	var object_action_id
 	var player_action_id
 	var desc
-@onready var objects_to_actions: Dictionary = {}
-@onready var close_objects: Array[ActionInfoList] = []
-@onready var far_objects: Dictionary = {}
+	
+@onready var possible_actions: Array[ActionInfo] = []
+
 
 @onready var controlled_by_player = true
 
@@ -77,9 +72,6 @@ func _ready():
 	close_interaction_area.area_entered.connect(_on_close_interaction_entered)
 	close_interaction_area.area_exited.connect(_on_close_interaction_exited)
 	close_interaction_area.body_entered.connect(_on_body_collision)
-	
-	far_interaction_area.area_entered.connect(_on_far_interaction_entered)
-	far_interaction_area.area_exited.connect(_on_far_interaction_exited)
 	
 	if not controlled_by_player:
 		$ControllablePlayer/UI.hide()
@@ -102,7 +94,7 @@ func _physics_process(delta: float):
 			animate(current_animation, delta)
 	else:
 		if should_update_ai():
-			agent_input = $AI.get_next_actions(position, far_objects, close_objects, reached, agent_input.motion, current_car)
+			agent_input = $AI.get_next_actions(position, possible_actions, reached, agent_input.motion, current_car)
 		if agent_input.going:
 			set_movement_target(agent_input.next_pos)
 			$Control/Label.text = "%f \n %f \n %f" % [agent_input.next_pos.x, agent_input.next_pos.y, agent_input.next_pos.z]
@@ -281,9 +273,9 @@ func _process(delta):
 		#do_action_by_number(agent_input.action_id)
 		do_action_by_number_list(agent_input.action_id)
 		
-func execute_action(action_info: ActionInfoList):
+func execute_action(action_info: ActionInfo):
 	var object = action_info.object
-	object.act(action_info.object_action_id)
+	object.act(action_info.object_action_id, player_id)
 	match action_info.player_action_id:
 		GLOBAL_DEFINITIONS.CHARACTER_ACTION.PICK: 
 			animation_tree["parameters/state/transition_request"] = "pick"
@@ -318,93 +310,32 @@ func execute_action(action_info: ActionInfoList):
 			$CollisionShape3D.disabled = false
 			show()
 	
-func do_action_by_number(num):
-	var i := 0
-	for object in objects_to_actions:
-		for action_info: ActionInfo in objects_to_actions[object]:
-			i += 1
-			if i == num: 
-				object.act(action_info.object_action_id)
-				match action_info.player_action_id:
-					GLOBAL_DEFINITIONS.CHARACTER_ACTION.PICK: 
-						animation_tree["parameters/state/transition_request"] = "pick"
-						current_pistol = object
-						current_pistol.reparent($Human_rig/GeneralSkeleton/GunBone/ShootFrom)
-						#current_pistol.transform = Transform3D(Basis(Quaternion(0.51, 0.53, 0.47, -0.48)), Vector3(-0.01, -0.014, 0.048))
-						current_pistol.transform = Transform3D(Basis.from_euler(Vector3(-1.57, -1.57 , 0)), Vector3(0, 0, 0))
-					GLOBAL_DEFINITIONS.CHARACTER_ACTION.THROW: 
-						animation_tree["parameters/state/transition_request"] = "throw"
-					GLOBAL_DEFINITIONS.CHARACTER_ACTION.SIT: 
-						animation_tree["parameters/state/transition_request"] = "sit"
-						animation_tree["parameters/sit/conditions/stand"] =  false
-						var sit_position: Transform3D = object.get_node("SitPosition").global_transform
-						global_position.x = sit_position.origin.x
-						global_position.z = sit_position.origin.z
-						orientation.basis = sit_position.basis
-						$CollisionShape3D.disabled = true
-						seated = true
-					GLOBAL_DEFINITIONS.CHARACTER_ACTION.STAND: 
-						animation_tree["parameters/sit/conditions/stand"] =  true
-						$CollisionShape3D.disabled = false
-						seated = false
-					GLOBAL_DEFINITIONS.CHARACTER_ACTION.OPEN: 
-						pass
-						#animation_tree["parameters/state/transition_request"] = "open"
-					GLOBAL_DEFINITIONS.CHARACTER_ACTION.ENTER_CAR:
-						current_car = object
-						$CollisionShape3D.disabled = true
-						hide()
-					GLOBAL_DEFINITIONS.CHARACTER_ACTION.EXIT_CAR:
-						current_car = null
-						$CollisionShape3D.disabled = false
-						show()
-				return
-	
-	
 func do_action_by_number_list(num):
-	if num < close_objects.size():
-		execute_action(close_objects[num])
-	
-func update_action_labels():
-	var i := 0
-	action_label.clear()
-	#print(objects_to_actions)
-	for object in objects_to_actions:
-		var action_info_list = objects_to_actions[object]
-		for action_info: ActionInfo in action_info_list:
-			i += 1
-			action_label.append_text("%d : %s \n" % [i, action_info.desc])
+	if num < possible_actions.size():
+		execute_action(possible_actions[num])
+
 			
 func update_action_labels_list():
 	action_label.clear()
-	for action_info_idx in close_objects.size():
-		var action_info = close_objects[action_info_idx]
+	for action_info_idx in possible_actions.size():
+		var action_info = possible_actions[action_info_idx]
 		action_label.append_text("%d : %s \n" % [action_info_idx+1, action_info.desc])
 		
 		
 	
 func _on_actions_update(object):
-	objects_to_actions[object] = []
 	remove_object_from_action_list(object)
 	if object.has_method("set_player"):
 		object.set_player(self)
-	for action in object.get_possible_actions():
-		#dict
-		var action_info = ActionInfo.new()
-		action_info.desc = object.get_action_description(action)
-		action_info.player_action_id = object.get_player_action(action)
-		action_info.object_action_id = action
+	for action in object.get_possible_actions(player_id):
 		
-		objects_to_actions[object].push_back(action_info)
-		
-		#list
-		var action_info_list = ActionInfoList.new()
+		var action_info_list = ActionInfo.new()
 		action_info_list.object = object
 		action_info_list.desc = object.get_action_description(action)
 		action_info_list.player_action_id = object.get_player_action(action)
 		action_info_list.object_action_id = action
 		
-		close_objects.push_back(action_info_list)
+		possible_actions.push_back(action_info_list)
 		
 	update_action_labels_list()
 	
@@ -416,25 +347,13 @@ func _on_close_interaction_entered(area):
 	
 func _on_close_interaction_exited(area):
 	var object = area.get_parent()
-	#dict
-	objects_to_actions.erase(object)
 	
-	#list 
 	remove_object_from_action_list(object)
 	
 	object.state_changed.disconnect(_on_actions_update)
 	update_action_labels_list()
-	
 
-func _on_far_interaction_entered(area):
-	var object = area.get_parent()
-	far_objects[object] = object.global_position
-	
-func _on_far_interaction_exited(area):
-	var object = area.get_parent()
-	far_objects.erase(object)
-	
-	
+
 @rpc("call_local")
 func shoot():
 	#var shoot_particle = $PlayerModel/Robot_Skeleton/Skeleton3D/GunBone/ShootFrom/ShootParticle
@@ -468,16 +387,16 @@ func schedule_ragdoll_end():
 	
 func remove_object_from_action_list(object):
 	var index_to_remove = []
-	for action_info_idx in close_objects.size():
-		var action_info = close_objects[action_info_idx]
+	for action_info_idx in possible_actions.size():
+		var action_info = possible_actions[action_info_idx]
 		if action_info.object == object:
 			index_to_remove.push_back(action_info_idx)
 	
-	var new_close_objects: Array[ActionInfoList] = []
-	for action_info_idx in close_objects.size():
+	var new_possible_actions: Array[ActionInfo] = []
+	for action_info_idx in possible_actions.size():
 		if index_to_remove.find(action_info_idx) == -1:
-			new_close_objects.push_back(close_objects[action_info_idx])
-	close_objects = new_close_objects
+			new_possible_actions.push_back(possible_actions[action_info_idx])
+	possible_actions = new_possible_actions
 
 func should_update_ai():
 	if ai_counter > AI_RATE:
