@@ -1,5 +1,35 @@
 extends Node
 
+class GraphAStar:
+	extends AStar3D
+
+	var links_cost: Dictionary
+	var name2index: Dictionary
+	var index2name: Dictionary
+
+	func build(hierarchy: LocationHierarchy):
+		var idx = 0
+		for child in hierarchy.child_locations:
+			name2index[child.name] = idx
+			index2name[idx] = child.name
+			add_point(idx, Vector3(0, 0, 0))
+			idx = idx +1
+		name2index[LocationGraph.OUT_NODE_NAME] = idx
+		index2name[idx] = LocationGraph.OUT_NODE_NAME
+		
+		for link in hierarchy.graph.links:
+			var idx1 = name2index[link.source_name]
+			var idx2 = name2index[link.dest_name]
+			connect_points(idx1, idx2, true)
+			links_cost[idx1 + 2 * idx2] = link.cost
+			
+	func _compute_cost(u, v):
+		return links_cost[u + 2 * v]
+
+	func _estimate_cost(_u, _v):
+		return 0
+
+
 @export var location_hierarchy: LocationHierarchy
 
 class LocationHierarchyNode:
@@ -9,15 +39,18 @@ class LocationHierarchyNode:
 	var graph: LocationGraph
 	var parent: LocationHierarchyNode
 	var level: int
+	var astar: GraphAStar
 
 func clone_node(old: LocationHierarchyNode):
-	var new = LocationHierarchyNode.new()
-	new.name = old.name
-	new.aabb = old.aabb
-	new.child_locations = old.child_locations
-	new.graph = old.graph
-	new.parent = old.parent
-	new.level = old.level
+	var new_node = LocationHierarchyNode.new()
+	new_node.name = old.name
+	new_node.aabb = old.aabb
+	new_node.child_locations = old.child_locations
+	new_node.graph = old.graph
+	new_node.parent = old.parent
+	new_node.level = old.level
+	new_node.astar = old.astar
+	return new_node
 
 var location_hierarchy_node: LocationHierarchyNode
 
@@ -34,6 +67,7 @@ func recursive_build(node: LocationHierarchyNode, hierarchy: LocationHierarchy):
 	node.aabb = hierarchy.aabb
 	node.child_locations = []
 	node.graph = hierarchy.graph
+	node.astar = GraphAStar.new().build(hierarchy)
 	for child in hierarchy.child_locations:
 		var child_node = LocationHierarchyNode.new()
 		node.child_locations.append(child_node)
@@ -106,6 +140,7 @@ enum StepType {GOTO, LINK_ACTION}
 class NavigationPlanStep:
 	var step_type: StepType
 	var end_position: Vector3
+	var crossing_rule: LocationGraphLink.CROSSING_RULE
 	
 	
 
@@ -133,21 +168,17 @@ func plan_navigation(start_position: Vector3, end_position: Vector3):
 		if elem == lca:
 			continue
 		if hierarchy_path[idx+1] == lca:
-			var partial_path = search_graph(elem.graph, elem.name, hierarchy_path[idx +2].name)
+			var partial_path = search_graph(lca, elem.name, hierarchy_path[idx +2].name)
 			full_path.append_array(partial_path)
 		else:
 			if idx < lca_idx:
-				var partial_path = search_graph(elem.graph, elem.name, LocationGraph.OUT_NODE_NAME)
+				var partial_path = search_graph(hierarchy_path[idx +1], elem.name, LocationGraph.OUT_NODE_NAME)
 				full_path.append_array(partial_path)
 			else:
-				var partial_path = search_graph(hierarchy_path[idx +1].graph, LocationGraph.OUT_NODE_NAME, hierarchy_path[idx +1].name)
+				var partial_path = search_graph(elem, LocationGraph.OUT_NODE_NAME, hierarchy_path[idx +1].name)
 				full_path.append_array(partial_path)
 
 	return full_path
-
-	
-	
-	
 
 
 func find_path_in_hierarchy(start_node: LocationHierarchyNode, end_node: LocationHierarchyNode, lca_out: LocationHierarchyNode) -> Array[LocationHierarchyNode]:
@@ -170,9 +201,6 @@ func find_path_in_hierarchy(start_node: LocationHierarchyNode, end_node: Locatio
 
 	return path
 
-
-
-
 func LCA(node_a: LocationHierarchyNode, node_b: LocationHierarchyNode):  
 	var a = node_a
 	var b = node_b
@@ -192,26 +220,86 @@ func LCA(node_a: LocationHierarchyNode, node_b: LocationHierarchyNode):
 	return a
 
 
+class Linkinfo:
+	var link: LocationGraphLink
+	var reverse: bool
 
-func search_graph(graph: LocationGraph, start: String, end: String) -> Array[NavigationPlanStep]:
+func find_link(graph: LocationGraph, a: StringName, b: StringName) -> Linkinfo:
+	for link: LocationGraphLink in graph.links: 
+		if (a == link.source_name and b == link.dest_name):
+			var info = Linkinfo.new()
+			info.link = link
+			info.reverse = false
+			return info
+		elif (b == link.source_name and a == link.dest_name):
+			var info = Linkinfo.new()
+			info.link = link
+			info.reverse = true
+			return info
+	return null
+
+
+func search_graph(hierarchy: LocationHierarchyNode, start: String, end: String) -> Array[NavigationPlanStep]:
+	var graph = hierarchy.graph
+	#var path_names = shortestPath(graph, start, end)
+	var path_names = shortestPathAstar(graph, hierarchy.astar, start, end)
+	var path = []
+	for idx in path_names.size():
+		if idx == path_names.size()-1:
+			break
+		var a = path_names[idx]
+		var b = path_names[idx + 1]
+		var link_info = find_link(graph, a, b)
+		var link = link_info.link
+		var step = NavigationPlanStep.new()
+		if link_info.reverse:
+			step.end_position = link.end_position
+		else:
+			step.end_position = link.start_position
+		step.step_type = StepType.GOTO
+		path.append(step)
+		if link.crossing_rule != LocationGraphLink.CROSSING_RULE.NONE:
+			var new_step = NavigationPlanStep.new()
+			new_step.step_type = StepType.LINK_ACTION
+			new_step.crossing_rule = link.crossing_rule
+
+
+	return path
+
+func shortestPath(graph: LocationGraph, start: String, end: String) -> Array[String]:
+	if end == LocationGraph.OUT_NODE_NAME:
+		if graph.out_strategy == LocationGraph.OUT_STRATEGY.NONE:
+			return []
+	#Specify link from out to each node?
+	# if start == LocationGraph.OUT_NODE_NAME:
+	# 	if graph.out_strategy == LocationGraph.OUT_STRATEGY.NONE:
+	# 		return [end]
+	
+	var queue = [[start]]
+	var visited = {}
+	while queue.size() > 0:
+		var path = queue.pop_front()
+		var currentNode = path[path.size() - 1]
+		if currentNode == end:
+			return path
+		elif not visited.has(currentNode):
+			var neighbors = graph[currentNode]
+			queue.append(neighbors)
+			visited[currentNode] = null
 	return []
 
+func shortestPathAstar(graph: LocationGraph, astar: GraphAStar, start: String, end: String) -> Array[String]:
+	if end == LocationGraph.OUT_NODE_NAME:
+		if graph.out_strategy == LocationGraph.OUT_STRATEGY.NONE:
+			return []
 
-# func dfs_search(vis: Dictionary, x, y, stack):
-# 	stack.append(x)
-# 	if x == y:
- 
-# 		printPath(stack)
-# 		return
-# 	vis.has(x)
- 
-#     # if backtracking is taking place
- 
-# 	for j in v[x]:
-             
-#             # if the node is not visited
-# 	if (vis[j] == False):
-# 		DFS(vis, j, y, stack)
-        
-# 	del stack[-1]
-	
+	var idx1 = astar.name2index[start]
+	var idx2 = astar.name2index[end]
+	var path = []
+	var idx_path = astar.get_id_path(idx1, idx2)
+	for idx in idx_path:
+		path.append(astar.index2name[idx])
+
+	return path
+
+

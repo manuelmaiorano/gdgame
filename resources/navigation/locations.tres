@@ -1,33 +1,78 @@
-[gd_resource type="Resource" script_class="LocationHierarchy" load_steps=6 format=3 uid="uid://djvndmw6t6uq3"]
+[gd_resource type="Resource" script_class="LocationHierarchy" load_steps=14 format=3 uid="uid://djvndmw6t6uq3"]
 
 [ext_resource type="Script" path="res://scripts/resource_scripts/navigation/location_resource.gd" id="1_7k04p"]
+[ext_resource type="Script" path="res://scripts/resource_scripts/navigation/graph_link_resource.gd" id="2_j6dml"]
+[ext_resource type="Script" path="res://scripts/resource_scripts/navigation/location_graph_resource.gd" id="3_ekwn2"]
 
-[sub_resource type="Resource" id="Resource_e8o8d"]
+[sub_resource type="Resource" id="Resource_vh48k"]
 script = ExtResource("1_7k04p")
-name = ""
+name = "kitchen"
+aabb = AABB(-4.645, 1.603, 0.308, 5.974, 8.75, 1.979)
+child_locations = Array[ExtResource("1_7k04p")]([])
+
+[sub_resource type="Resource" id="Resource_r75qh"]
+script = ExtResource("2_j6dml")
+source_name = &"kitchen"
+dest_name = &"livingroom"
+start_position = Vector3(0, 0, 0)
+end_position = Vector3(0, 0, 0)
+crossing_rule = 0
+cost = 1.0
+
+[sub_resource type="Resource" id="Resource_1tpw5"]
+script = ExtResource("2_j6dml")
+source_name = &"livingroom"
+dest_name = &"out"
+start_position = Vector3(0, 0, 0)
+end_position = Vector3(0, 0, 0)
+crossing_rule = 0
+cost = 0.0
+
+[sub_resource type="Resource" id="Resource_p74dg"]
+script = ExtResource("3_ekwn2")
+graph = {}
+out_strategy = 0
+links = Array[ExtResource("2_j6dml")]([SubResource("Resource_r75qh"), SubResource("Resource_1tpw5")])
+
+[sub_resource type="Resource" id="Resource_ohpvd"]
+script = ExtResource("1_7k04p")
+name = "livingroom"
+aabb = AABB(-4.645, 1.603, -2.449, 5.974, 8.75, 3.407)
+child_locations = Array[ExtResource("1_7k04p")]([])
+graph = SubResource("Resource_p74dg")
+
+[sub_resource type="Resource" id="Resource_s3ony"]
+script = ExtResource("1_7k04p")
+name = "Harris house"
+aabb = AABB(-3.664, 1.603, -0.679, 9.222, 8.75, 9.962)
+child_locations = Array[ExtResource("1_7k04p")]([SubResource("Resource_vh48k"), SubResource("Resource_ohpvd")])
+
+[sub_resource type="Resource" id="Resource_shr7q"]
+script = ExtResource("1_7k04p")
+name = "block1"
+aabb = AABB(-3.664, 1.603, -0.204, 9.222, 8.75, 28.572)
+child_locations = Array[ExtResource("1_7k04p")]([SubResource("Resource_s3ony")])
+
+[sub_resource type="Resource" id="Resource_vf06v"]
+script = ExtResource("1_7k04p")
+name = "livingroom"
 aabb = AABB(0, 0, 0, 0, 0, 0)
 child_locations = Array[ExtResource("1_7k04p")]([])
 
-[sub_resource type="Resource" id="Resource_evpdb"]
+[sub_resource type="Resource" id="Resource_ptoxg"]
 script = ExtResource("1_7k04p")
-name = "block"
+name = "Johnson house"
 aabb = AABB(0, 0, 0, 0, 0, 0)
-child_locations = Array[ExtResource("1_7k04p")]([SubResource("Resource_e8o8d")])
+child_locations = Array[ExtResource("1_7k04p")]([SubResource("Resource_vf06v")])
 
-[sub_resource type="Resource" id="Resource_evj0q"]
+[sub_resource type="Resource" id="Resource_eixe1"]
 script = ExtResource("1_7k04p")
-name = ""
-aabb = AABB(0, 0, 0, 0, 0, 0)
-child_locations = Array[ExtResource("1_7k04p")]([])
-
-[sub_resource type="Resource" id="Resource_8awwv"]
-script = ExtResource("1_7k04p")
-name = "block"
-aabb = AABB(0, 0, 0, 0, 0, 0)
-child_locations = Array[ExtResource("1_7k04p")]([SubResource("Resource_evj0q")])
+name = "block2"
+aabb = AABB(-3.664, 1.603, 2.274, 9.222, 8.75, 24.091)
+child_locations = Array[ExtResource("1_7k04p")]([SubResource("Resource_ptoxg")])
 
 [resource]
 script = ExtResource("1_7k04p")
 name = "root"
 aabb = AABB(0, 0, 0, 0, 0, 0)
-child_locations = Array[ExtResource("1_7k04p")]([SubResource("Resource_evpdb"), SubResource("Resource_8awwv")])
+child_locations = Array[ExtResource("1_7k04p")]([SubResource("Resource_shr7q"), SubResource("Resource_eixe1")])
