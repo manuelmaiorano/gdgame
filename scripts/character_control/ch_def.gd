@@ -342,11 +342,15 @@ func _on_actions_update(object):
 
 func _on_close_interaction_entered(area):
 	var object = area.get_parent()
+	if not object.has_method("get_possible_actions"):
+		return
 	_on_actions_update(object)
 	object.state_changed.connect(_on_actions_update)
 	
 func _on_close_interaction_exited(area):
 	var object = area.get_parent()
+	if not object.has_method("get_possible_actions"):
+		return
 	
 	remove_object_from_action_list(object)
 	

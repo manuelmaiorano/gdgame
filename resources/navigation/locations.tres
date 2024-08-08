@@ -1,78 +1,176 @@
-[gd_resource type="Resource" script_class="LocationHierarchy" load_steps=14 format=3 uid="uid://djvndmw6t6uq3"]
+[gd_resource type="Resource" script_class="LocationHierarchy" load_steps=28 format=3 uid="uid://djvndmw6t6uq3"]
 
 [ext_resource type="Script" path="res://scripts/resource_scripts/navigation/location_resource.gd" id="1_7k04p"]
-[ext_resource type="Script" path="res://scripts/resource_scripts/navigation/graph_link_resource.gd" id="2_j6dml"]
-[ext_resource type="Script" path="res://scripts/resource_scripts/navigation/location_graph_resource.gd" id="3_ekwn2"]
+[ext_resource type="Script" path="res://scripts/resource_scripts/navigation/location_graph_resource.gd" id="1_sqeyk"]
+[ext_resource type="Script" path="res://scripts/resource_scripts/navigation/graph_link_resource.gd" id="3_o0qkv"]
 
-[sub_resource type="Resource" id="Resource_vh48k"]
+[sub_resource type="Resource" id="Resource_oqkat"]
+script = ExtResource("1_sqeyk")
+out_strategy = 0
+links = Array[ExtResource("3_o0qkv")]([])
+
+[sub_resource type="Resource" id="Resource_63umh"]
+script = ExtResource("1_7k04p")
+name = "bathroom"
+aabb = AABB(-7.63135, -2.77248, 1.34549, 5.97351, 8.75, 1.83763)
+child_locations = Array[ExtResource("1_7k04p")]([])
+graph = SubResource("Resource_oqkat")
+
+[sub_resource type="Resource" id="Resource_rrov7"]
+script = ExtResource("1_sqeyk")
+out_strategy = 0
+links = Array[ExtResource("3_o0qkv")]([])
+
+[sub_resource type="Resource" id="Resource_jnswr"]
+script = ExtResource("1_7k04p")
+name = "livingroom"
+aabb = AABB(-7.63135, -2.77248, -4.15265, 5.97351, 8.75, 3.40733)
+child_locations = Array[ExtResource("1_7k04p")]([])
+graph = SubResource("Resource_rrov7")
+
+[sub_resource type="Resource" id="Resource_mxafk"]
+script = ExtResource("1_sqeyk")
+out_strategy = 0
+links = Array[ExtResource("3_o0qkv")]([])
+
+[sub_resource type="Resource" id="Resource_kl1iu"]
 script = ExtResource("1_7k04p")
 name = "kitchen"
-aabb = AABB(-4.645, 1.603, 0.308, 5.974, 8.75, 1.979)
+aabb = AABB(-7.63135, -2.77248, -0.681632, 5.97351, 8.75, 1.97891)
 child_locations = Array[ExtResource("1_7k04p")]([])
+graph = SubResource("Resource_mxafk")
 
-[sub_resource type="Resource" id="Resource_r75qh"]
-script = ExtResource("2_j6dml")
-source_name = &"kitchen"
-dest_name = &"livingroom"
-start_position = Vector3(0, 0, 0)
-end_position = Vector3(0, 0, 0)
+[sub_resource type="Resource" id="Resource_dqu5p"]
+script = ExtResource("3_o0qkv")
+source_name = &"bathroom"
+dest_name = &"kitchen"
+start_position = Vector3(-2.75515, 0, 1.26588)
+end_position = Vector3(-2.75515, 0, 1.26588)
 crossing_rule = 0
 cost = 1.0
 
-[sub_resource type="Resource" id="Resource_1tpw5"]
-script = ExtResource("2_j6dml")
+[sub_resource type="Resource" id="Resource_xi2rg"]
+script = ExtResource("3_o0qkv")
+source_name = &"kitchen"
+dest_name = &"livingroom"
+start_position = Vector3(-6.77617, 0, -0.819098)
+end_position = Vector3(-6.77617, 0, -0.819098)
+crossing_rule = 0
+cost = 1.0
+
+[sub_resource type="Resource" id="Resource_ts3bn"]
+script = ExtResource("3_o0qkv")
 source_name = &"livingroom"
 dest_name = &"out"
-start_position = Vector3(0, 0, 0)
-end_position = Vector3(0, 0, 0)
+start_position = Vector3(-1.6382, 0, -2.3456)
+end_position = Vector3(-1.6382, 0, -2.3456)
 crossing_rule = 0
-cost = 0.0
+cost = 1.0
 
-[sub_resource type="Resource" id="Resource_p74dg"]
-script = ExtResource("3_ekwn2")
-graph = {}
+[sub_resource type="Resource" id="Resource_tg3r3"]
+script = ExtResource("1_sqeyk")
 out_strategy = 0
-links = Array[ExtResource("2_j6dml")]([SubResource("Resource_r75qh"), SubResource("Resource_1tpw5")])
+links = Array[ExtResource("3_o0qkv")]([SubResource("Resource_dqu5p"), SubResource("Resource_xi2rg"), SubResource("Resource_ts3bn")])
 
-[sub_resource type="Resource" id="Resource_ohpvd"]
-script = ExtResource("1_7k04p")
-name = "livingroom"
-aabb = AABB(-4.645, 1.603, -2.449, 5.974, 8.75, 3.407)
-child_locations = Array[ExtResource("1_7k04p")]([])
-graph = SubResource("Resource_p74dg")
-
-[sub_resource type="Resource" id="Resource_s3ony"]
+[sub_resource type="Resource" id="Resource_ifjvb"]
 script = ExtResource("1_7k04p")
 name = "Harris house"
-aabb = AABB(-3.664, 1.603, -0.679, 9.222, 8.75, 9.962)
-child_locations = Array[ExtResource("1_7k04p")]([SubResource("Resource_vh48k"), SubResource("Resource_ohpvd")])
+aabb = AABB(-7.99885, -2.77248, -4.51369, 6.65672, 8.75, 8.15874)
+child_locations = Array[ExtResource("1_7k04p")]([SubResource("Resource_63umh"), SubResource("Resource_jnswr"), SubResource("Resource_kl1iu")])
+graph = SubResource("Resource_tg3r3")
 
-[sub_resource type="Resource" id="Resource_shr7q"]
+[sub_resource type="Resource" id="Resource_y0lub"]
+script = ExtResource("3_o0qkv")
+source_name = &"Harris house"
+dest_name = &"out"
+start_position = Vector3(-0.513452, 0, -2.60562)
+end_position = Vector3(-0.513452, 0, -2.60562)
+crossing_rule = 0
+cost = 1.0
+
+[sub_resource type="Resource" id="Resource_6nymf"]
+script = ExtResource("1_sqeyk")
+out_strategy = 0
+links = Array[ExtResource("3_o0qkv")]([SubResource("Resource_y0lub")])
+
+[sub_resource type="Resource" id="Resource_id5nn"]
 script = ExtResource("1_7k04p")
 name = "block1"
-aabb = AABB(-3.664, 1.603, -0.204, 9.222, 8.75, 28.572)
-child_locations = Array[ExtResource("1_7k04p")]([SubResource("Resource_s3ony")])
+aabb = AABB(-8.27491, -2.77248, -14.4901, 9.22168, 8.75, 28.5723)
+child_locations = Array[ExtResource("1_7k04p")]([SubResource("Resource_ifjvb")])
+graph = SubResource("Resource_6nymf")
 
-[sub_resource type="Resource" id="Resource_vf06v"]
+[sub_resource type="Resource" id="Resource_4j6l0"]
+script = ExtResource("1_sqeyk")
+out_strategy = 0
+links = Array[ExtResource("3_o0qkv")]([])
+
+[sub_resource type="Resource" id="Resource_ygxjd"]
 script = ExtResource("1_7k04p")
 name = "livingroom"
-aabb = AABB(0, 0, 0, 0, 0, 0)
+aabb = AABB(4.38907, -0.5, -2.59918, 5.94659, 7, 5.5224)
 child_locations = Array[ExtResource("1_7k04p")]([])
+graph = SubResource("Resource_4j6l0")
 
-[sub_resource type="Resource" id="Resource_ptoxg"]
+[sub_resource type="Resource" id="Resource_y53s6"]
+script = ExtResource("3_o0qkv")
+source_name = &"livingroom"
+dest_name = &"out"
+start_position = Vector3(4.27503, 0, 0.7)
+end_position = Vector3(4.27503, 0, 0.7)
+crossing_rule = 0
+cost = 1.0
+
+[sub_resource type="Resource" id="Resource_uieed"]
+script = ExtResource("1_sqeyk")
+out_strategy = 0
+links = Array[ExtResource("3_o0qkv")]([SubResource("Resource_y53s6")])
+
+[sub_resource type="Resource" id="Resource_v814l"]
 script = ExtResource("1_7k04p")
-name = "Johnson house"
-aabb = AABB(0, 0, 0, 0, 0, 0)
-child_locations = Array[ExtResource("1_7k04p")]([SubResource("Resource_vf06v")])
+name = "johns house"
+aabb = AABB(4.13369, -0.5, -4.99366, 6.46765, 1, 7.91687)
+child_locations = Array[ExtResource("1_7k04p")]([SubResource("Resource_ygxjd")])
+graph = SubResource("Resource_uieed")
 
-[sub_resource type="Resource" id="Resource_eixe1"]
+[sub_resource type="Resource" id="Resource_qrrp1"]
+script = ExtResource("3_o0qkv")
+source_name = &"johns house"
+dest_name = &"out"
+start_position = Vector3(3.52251, 0, 0.984509)
+end_position = Vector3(3.52251, 0, 0.984509)
+crossing_rule = 0
+cost = 1.0
+
+[sub_resource type="Resource" id="Resource_iaqnc"]
+script = ExtResource("1_sqeyk")
+out_strategy = 0
+links = Array[ExtResource("3_o0qkv")]([SubResource("Resource_qrrp1")])
+
+[sub_resource type="Resource" id="Resource_2qjq4"]
 script = ExtResource("1_7k04p")
 name = "block2"
-aabb = AABB(-3.664, 1.603, 2.274, 9.222, 8.75, 24.091)
-child_locations = Array[ExtResource("1_7k04p")]([SubResource("Resource_ptoxg")])
+aabb = AABB(3.04969, -2.77248, -9.77134, 9.22168, 8.75, 24.0906)
+child_locations = Array[ExtResource("1_7k04p")]([SubResource("Resource_v814l")])
+graph = SubResource("Resource_iaqnc")
+
+[sub_resource type="Resource" id="Resource_vty6h"]
+script = ExtResource("3_o0qkv")
+source_name = &"block1"
+dest_name = &"block2"
+start_position = Vector3(1.12532, 0, -6.47872)
+end_position = Vector3(1.12532, 0, -6.47872)
+crossing_rule = 0
+cost = 1.0
+
+[sub_resource type="Resource" id="Resource_uj3ku"]
+script = ExtResource("1_sqeyk")
+out_strategy = 0
+links = Array[ExtResource("3_o0qkv")]([SubResource("Resource_vty6h")])
 
 [resource]
 script = ExtResource("1_7k04p")
-name = "root"
-aabb = AABB(0, 0, 0, 0, 0, 0)
-child_locations = Array[ExtResource("1_7k04p")]([SubResource("Resource_shr7q"), SubResource("Resource_eixe1")])
+name = &"root"
+aabb = AABB(-11.3486, -0.50001, -15.5188, 25.9659, 10.2599, 34.4021)
+child_locations = Array[ExtResource("1_7k04p")]([SubResource("Resource_id5nn"), SubResource("Resource_2qjq4")])
+graph = SubResource("Resource_uj3ku")

@@ -1,3 +1,5 @@
+@tool
+
 extends Node
 
 class GraphAStar:
@@ -8,7 +10,7 @@ class GraphAStar:
 	var index2name: Dictionary
 
 	func build(hierarchy: LocationHierarchy):
-		var idx = 0
+		var idx = 1
 		for child in hierarchy.child_locations:
 			name2index[child.name] = idx
 			index2name[idx] = child.name
@@ -16,12 +18,17 @@ class GraphAStar:
 			idx = idx +1
 		name2index[LocationGraph.OUT_NODE_NAME] = idx
 		index2name[idx] = LocationGraph.OUT_NODE_NAME
+		add_point(idx, Vector3(0, 0, 0))
+		
 		
 		for link in hierarchy.graph.links:
 			var idx1 = name2index[link.source_name]
 			var idx2 = name2index[link.dest_name]
 			connect_points(idx1, idx2, true)
 			links_cost[idx1 + 2 * idx2] = link.cost
+			links_cost[idx2 + 2 * idx1] = link.cost
+
+		return self
 			
 	func _compute_cost(u, v):
 		return links_cost[u + 2 * v]
@@ -57,6 +64,20 @@ var location_hierarchy_node: LocationHierarchyNode
 func _ready():
 	build_hierarchy()
 	find_parents_and_levels()
+	var plan = plan_navigation_from_names("Harris house", "johns house")
+	print("Full Path1:")
+	for step in plan:
+		print(step.name)
+		print(step.end_position)
+	
+	var pos1 = get_parent().get_node("Node3D").get_node("posA").global_position
+	var pos2 = get_parent().get_node("Node3D").get_node("posB").global_position
+	
+	plan = plan_navigation_from_pos(pos1, pos2)
+	print("Full Path:")
+	for step in plan:
+		print(step.name)
+		print(step.end_position)
 
 func build_hierarchy():
 	location_hierarchy_node = LocationHierarchyNode.new()
@@ -99,27 +120,10 @@ func recursive_find_node(node: LocationHierarchyNode, position: Vector3):
 			var out = recursive_find_node(child, position)
 			if out != null: return out
 
-		return node.name
-
-	return null
-
-
-
-func get_aabb_from_name(location_name: String):
-	var root = location_hierarchy_node
-	return recursive_find_aabb(root, location_name)
-
-
-func recursive_find_aabb(node: LocationHierarchyNode, location_name: String):
-	if node.name == location_name:
-		return node.aabb
-
-	for child in node.child_locations:
-		return recursive_find_aabb(child, location_name)
+		return node
 
 	return null
 	
-
 
 func get_node_from_name(location_name: String):
 	var root = location_hierarchy_node
@@ -131,25 +135,38 @@ func recursive_find_node_from_name(node: LocationHierarchyNode, location_name: S
 		return node
 
 	for child in node.child_locations:
-		return recursive_find_node_from_name(child, location_name)
+		var out = recursive_find_node_from_name(child, location_name)
+		if out != null: return out
 
 	return null
 	
 enum StepType {GOTO, LINK_ACTION}
 
 class NavigationPlanStep:
+	var name: String
 	var step_type: StepType
 	var end_position: Vector3
 	var crossing_rule: LocationGraphLink.CROSSING_RULE
 	
-	
-
-func plan_navigation(start_position: Vector3, end_position: Vector3):
+func plan_navigation_from_pos(start_position: Vector3, end_position: Vector3):
 	var start_node = get_node_from_position(start_position)
 	var end_node = get_node_from_position(end_position)
 
-	var lca = LocationHierarchyNode.new()
-	var hierarchy_path = find_path_in_hierarchy(start_node, end_node, lca)
+	return plan_navigation(start_node, end_node)
+
+	
+func plan_navigation_from_names(start_name: String, end_name: String):
+	var start_node = get_node_from_name(start_name)
+	var end_node = get_node_from_name(end_name)
+
+	return plan_navigation(start_node, end_node)
+
+
+func plan_navigation(start_node: LocationHierarchyNode, end_node: LocationHierarchyNode):
+
+	var path: HierarchyPath = find_path_in_hierarchy(start_node, end_node)
+	var hierarchy_path = path.path
+	var lca = path.lca
 
 	var full_path: Array[NavigationPlanStep] = []
 
@@ -180,11 +197,13 @@ func plan_navigation(start_position: Vector3, end_position: Vector3):
 
 	return full_path
 
+class HierarchyPath:
+	var path: Array[LocationHierarchyNode]
+	var lca: LocationHierarchyNode
 
-func find_path_in_hierarchy(start_node: LocationHierarchyNode, end_node: LocationHierarchyNode, lca_out: LocationHierarchyNode) -> Array[LocationHierarchyNode]:
+func find_path_in_hierarchy(start_node: LocationHierarchyNode, end_node: LocationHierarchyNode) -> HierarchyPath:
 	var lca = LCA(start_node, end_node)
-	lca_out = lca
-	var path = []
+	var path: Array[LocationHierarchyNode] = []
 	var a = start_node
 	var b = end_node
 	while a != lca:
@@ -199,7 +218,10 @@ func find_path_in_hierarchy(start_node: LocationHierarchyNode, end_node: Locatio
 	for x in temp:
 		path.append(x)
 
-	return path
+	var out = HierarchyPath.new()
+	out.path = path
+	out.lca = lca
+	return out
 
 func LCA(node_a: LocationHierarchyNode, node_b: LocationHierarchyNode):  
 	var a = node_a
@@ -243,7 +265,7 @@ func search_graph(hierarchy: LocationHierarchyNode, start: String, end: String) 
 	var graph = hierarchy.graph
 	#var path_names = shortestPath(graph, start, end)
 	var path_names = shortestPathAstar(graph, hierarchy.astar, start, end)
-	var path = []
+	var path: Array[NavigationPlanStep] = []
 	for idx in path_names.size():
 		if idx == path_names.size()-1:
 			break
@@ -254,8 +276,10 @@ func search_graph(hierarchy: LocationHierarchyNode, start: String, end: String) 
 		var step = NavigationPlanStep.new()
 		if link_info.reverse:
 			step.end_position = link.end_position
+			step.name = link.dest_name + "->" + link.source_name
 		else:
 			step.end_position = link.start_position
+			step.name = link.source_name + "->" + link.dest_name 
 		step.step_type = StepType.GOTO
 		path.append(step)
 		if link.crossing_rule != LocationGraphLink.CROSSING_RULE.NONE:
@@ -295,7 +319,7 @@ func shortestPathAstar(graph: LocationGraph, astar: GraphAStar, start: String, e
 
 	var idx1 = astar.name2index[start]
 	var idx2 = astar.name2index[end]
-	var path = []
+	var path: Array[String] = []
 	var idx_path = astar.get_id_path(idx1, idx2)
 	for idx in idx_path:
 		path.append(astar.index2name[idx])
