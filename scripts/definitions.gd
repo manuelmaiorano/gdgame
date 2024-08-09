@@ -1,9 +1,14 @@
 extends Node
 
 class_name GLOBAL_DEFINITIONS
-enum CHARACTER_ACTION {NONE, SIT, STAND, THROW, OPEN, PICK, ENTER_CAR, EXIT_CAR}
+
+const MIN_DISTANCE_TO_EXECUTE_ACTION = 0.2
+
+enum CHARACTER_ACTION {NONE, SIT, STAND, THROW, OPEN, PICK, ENTER_CAR, EXIT_CAR, PUNCH, RUN, KICK, JUMP}
 
 enum OBJECTS {DOOR, PISTOL, CAR, CHAIR, COUCH, WINDOW, ELEVATOR}
+
+enum AI_FEEDBACK {DONE, FAILED, RUNNING}
 
 class AgentInput:
 	var motion: Vector2
@@ -15,13 +20,8 @@ class AgentInput:
 	var kicking: bool
 	var talking: bool
 	var action_id: int
-	var next_pos: Vector3
 	var going: bool
-	
-	
-class AgentPerceptions:
-	var actions: Array
-	
+
 
 class ObjectAdvertisement:
 	#physical

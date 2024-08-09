@@ -58,6 +58,7 @@ class ActionInfo:
 	
 @onready var possible_actions: Array[ActionInfo] = []
 
+@onready var step_execution_state = GLOBAL_DEFINITIONS.AI_FEEDBACK.DONE
 
 @onready var controlled_by_player = true
 
@@ -80,7 +81,72 @@ func _on_velocity_computed(safe_velocity: Vector3) -> void:
 	pass
 	#velocity = safe_velocity
 	#move_and_slide()
-	
+
+func execute_step(step: PlanStep):
+	match step.step_type:
+		PlanStep.STEP_TYPE.GOTO_POSITION:
+			set_movement_target(step.position)
+			return GLOBAL_DEFINITIONS.AI_FEEDBACK.RUNNING
+		PlanStep.STEP_TYPE.EXECUTE_OBJ_ACTION:
+			for idx in possible_actions.size():
+
+				var x = possible_actions[idx]
+				if x.object.get_instance_id() == step.object_id and x.action_id == step.object_action_id:
+					agent_input.action_id = idx
+					return GLOBAL_DEFINITIONS.AI_FEEDBACK.DONE
+					
+			return GLOBAL_DEFINITIONS.AI_FEEDBACK.FAILED
+		
+		PlanStep.STEP_TYPE.EXECUTE_OBJ_ACTION_BY_ACTION_ID:
+			for idx in possible_actions.size():
+
+				var x = possible_actions[idx]
+				if global_position.distance_to(x.object.global_position) < GLOBAL_DEFINITIONS.MIN_DISTANCE_TO_EXECUTE_ACTION and x.action_id == step.object_action_id:
+					agent_input.action_id = idx
+					return GLOBAL_DEFINITIONS.AI_FEEDBACK.DONE
+					
+			return GLOBAL_DEFINITIONS.AI_FEEDBACK.FAILED
+
+		PlanStep.STEP_TYPE.EXECUTE_NPC_ACTION:
+			match step.player_action_id:
+				GLOBAL_DEFINITIONS.CHARACTER_ACTION.PUNCH:
+					agent_input.punching = true
+				GLOBAL_DEFINITIONS.CHARACTER_ACTION.KICK:
+					agent_input.kicking = true
+			return GLOBAL_DEFINITIONS.AI_FEEDBACK.DONE
+		_:
+			pass
+
+func check_completion(step: PlanStep, navigation_completed: bool):
+	match step.step_type:
+		PlanStep.STEP_TYPE.GOTO_POSITION:
+			if navigation_completed and global_position.distance_to(step.position) > 1.0:
+				return GLOBAL_DEFINITIONS.AI_FEEDBACK.DONE
+			return GLOBAL_DEFINITIONS.AI_FEEDBACK.FAILED
+		_:
+			pass
+
+func abort(step: PlanStep):
+	match step.step_type:
+		PlanStep.STEP_TYPE.GOTO_POSITION:
+			set_movement_target(global_position)
+		_:
+			pass
+
+func update_ai(player_position: Vector3, possible_obj_actions: Array[ActionInfo]):
+	var should_abort = $AI.update(player_position, possible_obj_actions, step_execution_state)
+	var current_step: PlanStep = $AI.current_step
+	match step_execution_state:
+		GLOBAL_DEFINITIONS.AI_FEEDBACK.DONE:
+			step_execution_state = execute_step(current_step)
+		GLOBAL_DEFINITIONS.AI_FEEDBACK.FAILED:
+			step_execution_state = execute_step(current_step)
+		GLOBAL_DEFINITIONS.AI_FEEDBACK.RUNNING:
+			step_execution_state = check_completion(current_step, navigation_agent.is_navigation_finished())
+
+	if should_abort:
+		abort(current_step)
+		step_execution_state = GLOBAL_DEFINITIONS.AI_FEEDBACK.DONE
 
 func set_movement_target(movement_target: Vector3):
 	navigation_agent.set_target_position(movement_target)
@@ -96,8 +162,8 @@ func _physics_process(delta: float):
 		if should_update_ai():
 			agent_input = $AI.get_next_actions(position, possible_actions, reached, agent_input.motion, current_car)
 		if agent_input.going:
-			set_movement_target(agent_input.next_pos)
-			$Control/Label.text = "%f \n %f \n %f" % [agent_input.next_pos.x, agent_input.next_pos.y, agent_input.next_pos.z]
+			pass
+			#set_movement_target(agent_input.next_pos)
 		if navigation_agent.is_navigation_finished():
 			agent_input.motion = Vector2()
 			reached = true

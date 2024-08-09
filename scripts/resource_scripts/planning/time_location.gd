@@ -1,7 +1,7 @@
 extends Resource
-class_name TimeLocation
+class_name LocationName
 
 
 @export var minutes: int
-@export	var position: Vector3
-@export var aabb: AABB
+@export	var place_name: String
+@export	var is_name_relative: bool

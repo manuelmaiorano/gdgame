@@ -1,6 +1,5 @@
 extends Node3D
 
-const MIN_DISTANCE_TO_EXECUTE_ACTION = 1.0
 const MIN_DISTANCE_TO_DOOR = 0.1
 
 @export var hunger_curve: Curve
@@ -13,6 +12,8 @@ const MIN_DISTANCE_TO_DOOR = 0.1
 @export var room_curve: Curve
 
 @export var day_plan: Dayplan
+var current_step_stack: Array[PlanStep]
+var current_step: PlanStep
 
 class NpcNeeds:
 	#physical
@@ -71,7 +72,7 @@ class NpcRelationships:
 	var relation_scores: Array[float]
 
 class NpcKB:
-	var house: String
+	var house_name: String
 	
 
 class NpcState:
@@ -105,28 +106,7 @@ func handle_doors_navigation(player_position: Vector3, possible_actions: Array, 
 			agent_input.action_id = idx
 			return
 
-func check_plan(time_in_minutes: int, player_position: Vector3, agent_input: GLOBAL_DEFINITIONS.AgentInput):
-	for elem: TimeLocation in day_plan.times_and_locations:
-		if time_in_minutes > elem.minutes:
-			if player_position.distance_to(elem.position) > 100:
-				agent_input.going = true
-				going = true
-				agent_input.next_pos = elem.position
-				return
-
-
-func get_next_actions(player_position: Vector3, time_in_minutes: int, possible_actions: Array, reached: bool, motion: Vector2, current_car):
-	var agent_input = GLOBAL_DEFINITIONS.AgentInput.new()
-	if reached:
-		going = false
-
-	if going != true:
-		check_plan(time_in_minutes, player_position, agent_input)
-
-	if going == true:
-		handle_doors_navigation(player_position, possible_actions, agent_input)
-		return agent_input
-	
+func pick_obj_action(possible_actions: Array):
 	var scores: Array[ActionScore] = []
 	for idx in possible_actions.size():
 		var action_info = possible_actions[idx]
@@ -139,22 +119,71 @@ func get_next_actions(player_position: Vector3, time_in_minutes: int, possible_a
 		action_score.idx = idx
 		action_score.adv = adv
 		scores.append(action_score)
-		
+
 	scores.sort_custom(func(a, b): return a.score > b.score)
-	var top_four = scores.slice(0, 3)
-	var chosen = top_four.pick_random()
-	
-	#distance from object
-	var object_position = possible_actions[chosen.idx].object.position
-	var distance = player_position.distance_to(object_position)
-	if distance <= MIN_DISTANCE_TO_EXECUTE_ACTION:#execute
-		agent_input.action_id = chosen.idx
-		fulfill_object_adv(state.needs, chosen.adv)
-	else: #reach object
-		agent_input.going = true
-		agent_input.next_pos = object_position
-		going = true
+	var top = scores.slice(0, 3)
+	var chosen = top.pick_random()
 
-	return agent_input
+	return chosen
 	
+func transform_plan_step(step: PlanStep, player_position: Vector3, possible_obj_actions: Array) -> Array[PlanStep]:
+	var steps = []
+	match step.step_type:
+		PlanStep.STEP_TYPE.GOTO_LOCATION:
+			var pl_loc_name = Locations.get_node_from_position(player_position).name
+			var nav_steps = Locations.plan_navigation_from_names(pl_loc_name, step.location.place_name)
+			steps.append_array(nav_steps)
+		
+		PlanStep.STEP_TYPE.EXECUTE_LINK_ACTION:
+			match step.crossing_rule:
+				LocationGraphLink.CROSSING_RULE.NONE:
+					steps.append(step)
+				LocationGraphLink.CROSSING_RULE.DOOR:
+					var execute_step = PlanStep.new()
+					execute_step.step_type = PlanStep.STEP_TYPE.EXECUTE_OBJ_ACTION_BY_ACTION_ID
+					execute_step.object_action_id = Door.ACTION.OPEN
+					steps = [execute_step]
+				LocationGraphLink.CROSSING_RULE.CROSSWALK:
+					var reach_step = PlanStep.new()
+					reach_step.step_type = PlanStep.STEP_TYPE.GOTO_POSITION
+					reach_step.position = step.link_end_position
+					steps = [reach_step]
+		
+		PlanStep.STEP_TYPE.SEARCH_OBJ_ACTION:
+			var obj_action = pick_obj_action(possible_obj_actions)
+			
+			var reach_step = PlanStep.new()
+			reach_step.step_type = PlanStep.STEP_TYPE.GOTO_POSITION
+			reach_step.position = obj_action.object.position
+			var execute_step = PlanStep.new()
+			execute_step.step_type = PlanStep.STEP_TYPE.EXECUTE_OBJ_ACTION
+			execute_step.object_id = obj_action.object.get_instance_id()
+			execute_step.object_action_id = obj_action.object_action_id
+			steps = [reach_step, execute_step]
 
+			var object_position = obj_action.object.position
+			var distance = player_position.distance_to(object_position)
+			if distance >= GLOBAL_DEFINITIONS.MIN_DISTANCE_TO_EXECUTE_ACTION:
+				steps = [reach_step, execute_step]
+			else:
+				steps = [execute_step]
+		_:
+			steps.append(step)
+
+
+	return steps
+
+func update(player_position: Vector3, possible_obj_actions: Array, feedback: GLOBAL_DEFINITIONS.AI_FEEDBACK):
+
+
+	match feedback:
+		GLOBAL_DEFINITIONS.AI_FEEDBACK.DONE:
+			var step = current_step_stack.pop_back()
+			var steps = transform_plan_step(step, player_position,possible_obj_actions)
+			
+
+		GLOBAL_DEFINITIONS.AI_FEEDBACK.FAILED:
+			pass
+		GLOBAL_DEFINITIONS.AI_FEEDBACK.RUNNING:
+			pass
+		

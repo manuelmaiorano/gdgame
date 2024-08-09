@@ -34,7 +34,7 @@ func iterate(node: Node, hierarchy: LocationHierarchy):
 			linkObj.start_position = link.global_position
 			linkObj.end_position = link.global_position
 			linkObj.crossing_rule = LocationGraphLink.CROSSING_RULE.NONE
-		elif link is NavigationLink3D:
+		if link is NavigationLink3D:
 			linkObj.start_position = link.start_position
 			linkObj.end_position = link.end_position
 			linkObj.crossing_rule = LocationGraphLink.CROSSING_RULE.CROSSWALK

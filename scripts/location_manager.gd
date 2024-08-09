@@ -1,5 +1,5 @@
 @tool
-
+class_name LocationManager
 extends Node
 
 class GraphAStar:
@@ -68,7 +68,7 @@ func _ready():
 	print("Full Path1:")
 	for step in plan:
 		print(step.name)
-		print(step.end_position)
+		print(step.position)
 	
 	var pos1 = get_parent().get_node("Node3D").get_node("posA").global_position
 	var pos2 = get_parent().get_node("Node3D").get_node("posB").global_position
@@ -77,7 +77,7 @@ func _ready():
 	print("Full Path:")
 	for step in plan:
 		print(step.name)
-		print(step.end_position)
+		print(step.position)
 
 func build_hierarchy():
 	location_hierarchy_node = LocationHierarchyNode.new()
@@ -140,14 +140,6 @@ func recursive_find_node_from_name(node: LocationHierarchyNode, location_name: S
 
 	return null
 	
-enum StepType {GOTO, LINK_ACTION}
-
-class NavigationPlanStep:
-	var name: String
-	var step_type: StepType
-	var end_position: Vector3
-	var crossing_rule: LocationGraphLink.CROSSING_RULE
-	
 func plan_navigation_from_pos(start_position: Vector3, end_position: Vector3):
 	var start_node = get_node_from_position(start_position)
 	var end_node = get_node_from_position(end_position)
@@ -168,7 +160,7 @@ func plan_navigation(start_node: LocationHierarchyNode, end_node: LocationHierar
 	var hierarchy_path = path.path
 	var lca = path.lca
 
-	var full_path: Array[NavigationPlanStep] = []
+	var full_path: Array[PlanStep] = []
 
 	#find index of lca
 	var lca_idx = -1
@@ -261,11 +253,11 @@ func find_link(graph: LocationGraph, a: StringName, b: StringName) -> Linkinfo:
 	return null
 
 
-func search_graph(hierarchy: LocationHierarchyNode, start: String, end: String) -> Array[NavigationPlanStep]:
+func search_graph(hierarchy: LocationHierarchyNode, start: String, end: String) -> Array[PlanStep]:
 	var graph = hierarchy.graph
 	#var path_names = shortestPath(graph, start, end)
 	var path_names = shortestPathAstar(graph, hierarchy.astar, start, end)
-	var path: Array[NavigationPlanStep] = []
+	var path: Array[PlanStep] = []
 	for idx in path_names.size():
 		if idx == path_names.size()-1:
 			break
@@ -273,19 +265,25 @@ func search_graph(hierarchy: LocationHierarchyNode, start: String, end: String) 
 		var b = path_names[idx + 1]
 		var link_info = find_link(graph, a, b)
 		var link = link_info.link
-		var step = NavigationPlanStep.new()
+		var step = PlanStep.new()
+		var end_position = Vector3()
 		if link_info.reverse:
-			step.end_position = link.end_position
+			step.position = link.end_position
+			end_position = link.start_position
 			step.name = link.dest_name + "->" + link.source_name
 		else:
-			step.end_position = link.start_position
+			step.position = link.start_position
+			end_position = link.end_position
 			step.name = link.source_name + "->" + link.dest_name 
-		step.step_type = StepType.GOTO
+		step.step_type = PlanStep.STEP_TYPE.GOTO_LOCATION
 		path.append(step)
 		if link.crossing_rule != LocationGraphLink.CROSSING_RULE.NONE:
-			var new_step = NavigationPlanStep.new()
-			new_step.step_type = StepType.LINK_ACTION
+			var new_step = PlanStep.new()
+			new_step.step_type = PlanStep.STEP_TYPE.EXECUTE_LINK_ACTION
 			new_step.crossing_rule = link.crossing_rule
+			new_step.link_end_position = end_position
+			new_step.name = "LinkAction " + str(link.crossing_rule)
+			path.append(new_step)
 
 
 	return path

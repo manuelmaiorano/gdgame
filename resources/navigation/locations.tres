@@ -160,7 +160,7 @@ source_name = &"block1"
 dest_name = &"block2"
 start_position = Vector3(1.12532, 0, -6.47872)
 end_position = Vector3(1.12532, 0, -6.47872)
-crossing_rule = 0
+crossing_rule = 2
 cost = 1.0
 
 [sub_resource type="Resource" id="Resource_uj3ku"]
