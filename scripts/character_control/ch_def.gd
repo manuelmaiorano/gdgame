@@ -65,8 +65,10 @@ class ActionInfo:
 @onready var controlled_by_player = false
 
 func _ready():
+	Characters.register(self)
 	if name == Characters.player_controlled_character:
 		controlled_by_player = true
+		$ControllablePlayer/CameraBase/CameraRot/SpringArm3D/Camera3D.make_current()
 	# Pre-initialize orientation transform.
 	orientation = player_model.global_transform
 	orientation.origin = Vector3()
@@ -151,6 +153,7 @@ func update_ai(player_position: Vector3, possible_obj_actions: Array[ActionInfo]
 	var should_abort = $AI.update(player_position, possible_obj_actions, step_execution_state, CurrentTimeManager.get_current_time_in_minutes())
 	var current_step: PlanStep = $AI.current_step_task
 	if current_step:
+		DebugView.print_debug_info("STEP: %s" % current_step.name, self)
 		match step_execution_state:
 			GLOBAL_DEFINITIONS.AI_FEEDBACK.DONE:
 				step_execution_state = execute_step(current_step)

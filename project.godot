@@ -22,6 +22,7 @@ Locations="*res://scenes/utilities/locations.tscn"
 CurrentTimeManager="*res://scenes/utilities/time_manager.tscn"
 BtRulesManager="*res://scenes/utilities/bt_rules_manager.tscn"
 Characters="*res://scenes/utilities/character_manager.tscn"
+DebugView="*res://scenes/debug/debug_view.tscn"
 
 [editor_plugins]
 
@@ -171,6 +172,11 @@ action_5={
 action_6={
 "deadzone": 0.5,
 "events": [Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":-1,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"pressed":false,"keycode":0,"physical_keycode":54,"key_label":0,"unicode":54,"echo":false,"script":null)
+]
+}
+switch_player_view={
+"deadzone": 0.5,
+"events": [Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":-1,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"pressed":false,"keycode":0,"physical_keycode":4194306,"key_label":0,"unicode":0,"echo":false,"script":null)
 ]
 }
 

@@ -45,7 +45,7 @@ var is_capturing := false
 
 func _ready():
 	if get_multiplayer_authority() == multiplayer.get_unique_id():
-		camera_camera.make_current()
+		#camera_camera.make_current()
 		#Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
 		is_capturing = true
 		Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
