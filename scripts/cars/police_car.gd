@@ -27,7 +27,7 @@ func exit():
 		return
 	entered = false
 
-func get_possible_actions():
+func get_possible_actions(player_id):
 	if entered:
 		return [ACTION.EXIT]
 	return [ACTION.ENTER]
@@ -42,7 +42,7 @@ func get_action_description(action: ACTION):
 		ACTION.ENTER: return "Enter the car"
 		ACTION.EXIT: return "Exit the car"
 		
-func act(action: ACTION):
+func act(action: ACTION, player_id):
 	match action:
 		ACTION.ENTER: enter()
 		ACTION.EXIT: exit()

@@ -19,6 +19,9 @@ config/icon="res://icon.svg"
 
 SimpleGrass="*res://addons/simplegrasstextured/singleton.tscn"
 Locations="*res://scenes/utilities/locations.tscn"
+CurrentTimeManager="*res://scenes/utilities/time_manager.tscn"
+BtRulesManager="*res://scenes/utilities/bt_rules_manager.tscn"
+Characters="*res://scenes/utilities/character_manager.tscn"
 
 [editor_plugins]
 

@@ -1,0 +1,7 @@
+[gd_scene load_steps=2 format=3 uid="uid://de1xpqmdfa3sa"]
+
+[ext_resource type="Script" path="res://scripts/character_manager.gd" id="1_hhslw"]
+
+[node name="CharacterManager" type="Node"]
+script = ExtResource("1_hhslw")
+player_controlled_character = "ch_def1"

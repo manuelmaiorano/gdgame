@@ -1,10 +1,9 @@
-[gd_scene load_steps=18 format=3 uid="uid://c23s5sxarhjxt"]
+[gd_scene load_steps=17 format=3 uid="uid://c23s5sxarhjxt"]
 
 [ext_resource type="PackedScene" uid="uid://ccdjbgkyqnwqx" path="res://scenes/characters/ch_def_1.tscn" id="1_moc6e"]
 [ext_resource type="PackedScene" uid="uid://blwfwyvts1doh" path="res://scenes/characters/ch_male.tscn" id="2_vpsre"]
 [ext_resource type="PackedScene" uid="uid://ggeqfabicn0c" path="res://scenes/props/weapons/pistol.tscn" id="3_843tp"]
 [ext_resource type="PackedScene" uid="uid://bw276s7bov1ow" path="res://scenes/cars/police_car.tscn" id="4_olupi"]
-[ext_resource type="Script" path="res://scripts/manager.gd" id="5_lu1hv"]
 [ext_resource type="PackedScene" uid="uid://bpyqiq17rrev4" path="res://scenes/debug/debug_view.tscn" id="6_qv02c"]
 [ext_resource type="Shader" path="res://addons/simplegrasstextured/shaders/grass.gdshader" id="7_j6jtc"]
 [ext_resource type="Texture2D" uid="uid://c4ggdp0kg5wjk" path="res://addons/simplegrasstextured/textures/grassbushcc008.png" id="8_gr04o"]
@@ -30,7 +29,7 @@ polygons = [PackedInt32Array(3, 2, 0), PackedInt32Array(0, 2, 1)]
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_0av1o"]
 albedo_color = Color(0.65098, 0.176471, 0.176471, 1)
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_xh1bq"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_6ce0v"]
 resource_local_to_scene = true
 render_priority = 0
 shader = ExtResource("7_j6jtc")
@@ -65,7 +64,7 @@ _surfaces = [{
 "format": 34359742495,
 "index_count": 12,
 "index_data": PackedByteArray(0, 0, 1, 0, 2, 0, 3, 0, 1, 0, 0, 0, 4, 0, 5, 0, 6, 0, 7, 0, 5, 0, 4, 0),
-"material": SubResource("ShaderMaterial_xh1bq"),
+"material": SubResource("ShaderMaterial_6ce0v"),
 "primitive": 3,
 "uv_scale": Vector4(0, 0, 0, 0),
 "vertex_count": 8,
@@ -100,9 +99,6 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.94408, 0, 2.49902)
 
 [node name="police_car" parent="." instance=ExtResource("4_olupi")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10, 0, 11)
-
-[node name="Manager" type="Node" parent="."]
-script = ExtResource("5_lu1hv")
 
 [node name="NavigationRegion3D" type="NavigationRegion3D" parent="."]
 navigation_mesh = SubResource("NavigationMesh_jsv4a")

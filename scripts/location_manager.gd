@@ -69,7 +69,7 @@ func _ready():
 	for step in plan:
 		print(step.name)
 		print(step.position)
-	
+	return
 	var pos1 = get_parent().get_node("Node3D").get_node("posA").global_position
 	var pos2 = get_parent().get_node("Node3D").get_node("posB").global_position
 	
@@ -176,7 +176,7 @@ func plan_navigation(start_node: LocationHierarchyNode, end_node: LocationHierar
 			break
 		if elem == lca:
 			continue
-		if hierarchy_path[idx+1] == lca:
+		if hierarchy_path[idx+1] == lca and hierarchy_path.size() >= idx +3:
 			var partial_path = search_graph(lca, elem.name, hierarchy_path[idx +2].name)
 			full_path.append_array(partial_path)
 		else:

@@ -15,7 +15,7 @@ func pick():
 	self.hide()
 	
 
-func get_possible_actions():
+func get_possible_actions(player_id):
 	if picked:
 		return []
 	return [ACTION.PICK]
@@ -28,7 +28,7 @@ func get_action_description(action: ACTION):
 	match action:
 		ACTION.PICK: return "Pick the gun"
 
-func act(action: ACTION):
+func act(action: ACTION, player_id):
 	match action:
 		ACTION.PICK: pick()
 	state_changed.emit(self)

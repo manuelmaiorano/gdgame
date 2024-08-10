@@ -59,10 +59,14 @@ class ActionInfo:
 @onready var possible_actions: Array[ActionInfo] = []
 
 @onready var step_execution_state = GLOBAL_DEFINITIONS.AI_FEEDBACK.DONE
+@onready var action_successful = true
+@onready var action_done = false
 
-@onready var controlled_by_player = true
+@onready var controlled_by_player = false
 
 func _ready():
+	if name == Characters.player_controlled_character:
+		controlled_by_player = true
 	# Pre-initialize orientation transform.
 	orientation = player_model.global_transform
 	orientation.origin = Vector3()
@@ -88,22 +92,24 @@ func execute_step(step: PlanStep):
 			set_movement_target(step.position)
 			return GLOBAL_DEFINITIONS.AI_FEEDBACK.RUNNING
 		PlanStep.STEP_TYPE.EXECUTE_OBJ_ACTION:
+			action_done = false
 			for idx in possible_actions.size():
 
 				var x = possible_actions[idx]
 				if x.object.get_instance_id() == step.object_id and x.action_id == step.object_action_id:
 					agent_input.action_id = idx
-					return GLOBAL_DEFINITIONS.AI_FEEDBACK.DONE
+					return GLOBAL_DEFINITIONS.AI_FEEDBACK.RUNNING
 					
 			return GLOBAL_DEFINITIONS.AI_FEEDBACK.FAILED
 		
 		PlanStep.STEP_TYPE.EXECUTE_OBJ_ACTION_BY_ACTION_ID:
+			action_done = false
 			for idx in possible_actions.size():
 
 				var x = possible_actions[idx]
 				if global_position.distance_to(x.object.global_position) < GLOBAL_DEFINITIONS.MIN_DISTANCE_TO_EXECUTE_ACTION and x.action_id == step.object_action_id:
 					agent_input.action_id = idx
-					return GLOBAL_DEFINITIONS.AI_FEEDBACK.DONE
+					return GLOBAL_DEFINITIONS.AI_FEEDBACK.RUNNING
 					
 			return GLOBAL_DEFINITIONS.AI_FEEDBACK.FAILED
 
@@ -120,9 +126,17 @@ func execute_step(step: PlanStep):
 func check_completion(step: PlanStep, navigation_completed: bool):
 	match step.step_type:
 		PlanStep.STEP_TYPE.GOTO_POSITION:
-			if navigation_completed and global_position.distance_to(step.position) > 1.0:
+			if not navigation_completed:
+				return GLOBAL_DEFINITIONS.AI_FEEDBACK.RUNNING
+			if navigation_completed and global_position.distance_to(step.position) < 1.0:
 				return GLOBAL_DEFINITIONS.AI_FEEDBACK.DONE
 			return GLOBAL_DEFINITIONS.AI_FEEDBACK.FAILED
+		PlanStep.STEP_TYPE.EXECUTE_OBJ_ACTION_BY_ACTION_ID or PlanStep.STEP_TYPE.EXECUTE_OBJ_ACTION:
+			if action_done:
+				if action_successful:
+					return GLOBAL_DEFINITIONS.AI_FEEDBACK.DONE
+				return GLOBAL_DEFINITIONS.AI_FEEDBACK.FAILED
+			return GLOBAL_DEFINITIONS.AI_FEEDBACK.RUNNING
 		_:
 			pass
 
@@ -134,15 +148,16 @@ func abort(step: PlanStep):
 			pass
 
 func update_ai(player_position: Vector3, possible_obj_actions: Array[ActionInfo]):
-	var should_abort = $AI.update(player_position, possible_obj_actions, step_execution_state)
-	var current_step: PlanStep = $AI.current_step
-	match step_execution_state:
-		GLOBAL_DEFINITIONS.AI_FEEDBACK.DONE:
-			step_execution_state = execute_step(current_step)
-		GLOBAL_DEFINITIONS.AI_FEEDBACK.FAILED:
-			step_execution_state = execute_step(current_step)
-		GLOBAL_DEFINITIONS.AI_FEEDBACK.RUNNING:
-			step_execution_state = check_completion(current_step, navigation_agent.is_navigation_finished())
+	var should_abort = $AI.update(player_position, possible_obj_actions, step_execution_state, CurrentTimeManager.get_current_time_in_minutes())
+	var current_step: PlanStep = $AI.current_step_task
+	if current_step:
+		match step_execution_state:
+			GLOBAL_DEFINITIONS.AI_FEEDBACK.DONE:
+				step_execution_state = execute_step(current_step)
+			GLOBAL_DEFINITIONS.AI_FEEDBACK.FAILED:
+				step_execution_state = execute_step(current_step)
+			GLOBAL_DEFINITIONS.AI_FEEDBACK.RUNNING:
+				step_execution_state = check_completion(current_step, navigation_agent.is_navigation_finished())
 
 	if should_abort:
 		abort(current_step)
@@ -160,10 +175,8 @@ func _physics_process(delta: float):
 			animate(current_animation, delta)
 	else:
 		if should_update_ai():
-			agent_input = $AI.get_next_actions(position, possible_actions, reached, agent_input.motion, current_car)
-		if agent_input.going:
-			pass
-			#set_movement_target(agent_input.next_pos)
+			update_ai(global_position, possible_actions)
+			#agent_input = $AI.get_next_actions(position, possible_actions, reached, agent_input.motion, current_car)
 		if navigation_agent.is_navigation_finished():
 			agent_input.motion = Vector2()
 			reached = true
@@ -337,11 +350,16 @@ func _process(delta):
 	
 	if agent_input.action_id > 0:
 		#do_action_by_number(agent_input.action_id)
-		do_action_by_number_list(agent_input.action_id)
+		action_successful = do_action_by_number_list(agent_input.action_id)
+		action_done = true
 		
 func execute_action(action_info: ActionInfo):
 	var object = action_info.object
-	object.act(action_info.object_action_id, player_id)
+	var is_successful = object.act(action_info.object_action_id, player_id)
+	if not controlled_by_player and not is_successful:
+		return false
+	if not controlled_by_player:
+		$AI.fulfill_object_adv(object.get_action_adv(action_info.object_action_id))
 	match action_info.player_action_id:
 		GLOBAL_DEFINITIONS.CHARACTER_ACTION.PICK: 
 			animation_tree["parameters/state/transition_request"] = "pick"
@@ -375,10 +393,14 @@ func execute_action(action_info: ActionInfo):
 			current_car = null
 			$CollisionShape3D.disabled = false
 			show()
+	return true
 	
 func do_action_by_number_list(num):
+	if controlled_by_player:
+		num -= 1
 	if num < possible_actions.size():
-		execute_action(possible_actions[num])
+		return execute_action(possible_actions[num])
+	return false
 
 			
 func update_action_labels_list():

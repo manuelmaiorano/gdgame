@@ -11,9 +11,16 @@ const MIN_DISTANCE_TO_DOOR = 0.1
 @export var social_curve: Curve
 @export var room_curve: Curve
 
-@export var day_plan: Dayplan
-var current_step_stack: Array[PlanStep]
-var current_step: PlanStep
+@export var day_schedules: Array[DaySchedule]
+var current_event: DaySchedule
+var current_bt: BTNode
+var current_step_task: PlanStep = null
+
+class BTNode:
+	var step: PlanStep
+	var children: Array[BTNode]
+	var parent: BTNode
+	var type: BTInfo.BTNodeType
 
 class NpcNeeds:
 	#physical
@@ -37,16 +44,6 @@ func update_needs(needs: NpcNeeds, action: GLOBAL_DEFINITIONS.AgentInput):
 	needs.fun -= step
 	needs.social -= step
 	needs.room -= step
-
-func fulfill_object_adv(needs: NpcNeeds, objectAd: GLOBAL_DEFINITIONS.ObjectAdvertisement):
-	needs.hunger += objectAd.hunger
-	needs.comfort += objectAd.comfort
-	needs.hygiene += objectAd.hygiene
-	needs.bladder += objectAd.bladder
-	needs.energy += objectAd.energy
-	needs.fun += objectAd.fun
-	needs.social += objectAd.social
-	needs.room += objectAd.room
 	
 func get_object_score(needs: NpcNeeds, objectAd: GLOBAL_DEFINITIONS.ObjectAdvertisement):
 	var score = 0
@@ -97,6 +94,9 @@ class ActionScore:
 	var idx: int
 	var score: float
 	var adv: GLOBAL_DEFINITIONS.ObjectAdvertisement
+
+func _ready():
+	state.needs = NpcNeeds.new()
 		
 
 func handle_doors_navigation(player_position: Vector3, possible_actions: Array, agent_input: GLOBAL_DEFINITIONS.AgentInput):
@@ -105,6 +105,16 @@ func handle_doors_navigation(player_position: Vector3, possible_actions: Array, 
 		if action.object_action_id == Door.ACTION.OPEN and player_position.distance_to(action.object.position) < MIN_DISTANCE_TO_DOOR:
 			agent_input.action_id = idx
 			return
+
+func fulfill_object_adv(objectAd: GLOBAL_DEFINITIONS.ObjectAdvertisement):
+	state.needs.hunger += objectAd.hunger
+	state.needs.comfort += objectAd.comfort
+	state.needs.hygiene += objectAd.hygiene
+	state.needs.bladder += objectAd.bladder
+	state.needs.energy += objectAd.energy
+	state.needs.fun += objectAd.fun
+	state.needs.social += objectAd.social
+	state.needs.room += objectAd.room
 
 func pick_obj_action(possible_actions: Array):
 	var scores: Array[ActionScore] = []
@@ -173,17 +183,115 @@ func transform_plan_step(step: PlanStep, player_position: Vector3, possible_obj_
 
 	return steps
 
-func update(player_position: Vector3, possible_obj_actions: Array, feedback: GLOBAL_DEFINITIONS.AI_FEEDBACK):
+func fill_bt_node_seq(bt_node: BTNode, children_steps: Array[PlanStep]):
+	bt_node.type = BTInfo.BTNodeType.SEQUENCE
+	for step in children_steps:
+		var btNode_child = BTNode.new()
+		btNode_child.step = step
+		btNode_child.parent = bt_node
+		btNode_child.type = BTInfo.BTNodeType.TASK
+		bt_node.children.append(btNode_child)
 
-
-	match feedback:
-		GLOBAL_DEFINITIONS.AI_FEEDBACK.DONE:
-			var step = current_step_stack.pop_back()
-			var steps = transform_plan_step(step, player_position,possible_obj_actions)
-			
-
-		GLOBAL_DEFINITIONS.AI_FEEDBACK.FAILED:
-			pass
-		GLOBAL_DEFINITIONS.AI_FEEDBACK.RUNNING:
-			pass
+func get_BTNode(btNode: BTNode, step: PlanStep, player_position: Vector3, possible_obj_actions: Array):
+	btNode.step = step
+	btNode.type = BTInfo.BTNodeType.TASK
+	btNode.children = []
+	match step.step_type:
+		PlanStep.STEP_TYPE.GOTO_LOCATION:
+			var pl_loc_name = Locations.get_node_from_position(player_position).name
+			var nav_steps = Locations.plan_navigation_from_names(pl_loc_name, step.location.place_name)
+			fill_bt_node_seq(btNode, nav_steps)
+		PlanStep.STEP_TYPE.EXECUTE_LINK_ACTION:
+			match step.crossing_rule:
+				LocationGraphLink.CROSSING_RULE.NONE:
+					btNode.type = BTInfo.BTNodeType.TASK
+				LocationGraphLink.CROSSING_RULE.DOOR:
+					var execute_step = PlanStep.new()
+					execute_step.step_type = PlanStep.STEP_TYPE.EXECUTE_OBJ_ACTION_BY_ACTION_ID
+					execute_step.object_action_id = Door.ACTION.OPEN
+					fill_bt_node_seq(btNode, [execute_step])
+				LocationGraphLink.CROSSING_RULE.CROSSWALK:
+					var reach_step = PlanStep.new()
+					reach_step.step_type = PlanStep.STEP_TYPE.GOTO_POSITION
+					reach_step.position = step.link_end_position
+					fill_bt_node_seq(btNode, [reach_step])
 		
+		PlanStep.STEP_TYPE.SEARCH_OBJ_ACTION:
+			var obj_action = pick_obj_action(possible_obj_actions)
+			
+			var reach_step = PlanStep.new()
+			reach_step.step_type = PlanStep.STEP_TYPE.GOTO_POSITION
+			reach_step.position = obj_action.object.position
+			var execute_step = PlanStep.new()
+			execute_step.step_type = PlanStep.STEP_TYPE.EXECUTE_OBJ_ACTION
+			execute_step.object_id = obj_action.object.get_instance_id()
+			execute_step.object_action_id = obj_action.object_action_id
+
+			var object_position = obj_action.object.position
+			var distance = player_position.distance_to(object_position)
+			if distance >= GLOBAL_DEFINITIONS.MIN_DISTANCE_TO_EXECUTE_ACTION:
+				fill_bt_node_seq(btNode, [reach_step, execute_step])
+			else:
+				fill_bt_node_seq(btNode, [execute_step])
+		PlanStep.STEP_TYPE.SEARCH_OBJ_ACTION:
+			var expansion_rule: BTInfo = BtRulesManager.get_bt_info(step.name)
+			btNode.type = expansion_rule.type
+			for child_name in expansion_rule.children_step_names:
+				var btNode_child = BTNode.new()
+				btNode_child.step = PlanStep.new()
+				btNode_child.step.name = child_name
+				btNode_child.step.copy_params(step)
+
+				get_BTNode(btNode_child, btNode_child.step, player_position, possible_obj_actions)
+				btNode_child.parent = btNode
+				btNode.children.append(btNode_child)
+				
+		_:
+			btNode.type = BTInfo.BTNodeType.TASK
+
+
+
+
+func update(player_position: Vector3, possible_obj_actions: Array, feedback: GLOBAL_DEFINITIONS.AI_FEEDBACK, minutes: int):
+	update_needs(state.needs, null)
+	
+	if not current_bt:
+		#check schedule
+		for event in day_schedules:
+			if event == current_event:
+				continue
+			if minutes > event.hours * 60 + event.minutes:
+				current_bt = BTNode.new()
+				get_BTNode(current_bt, event.step, player_position, possible_obj_actions)
+				current_event = event
+	if current_bt == null:
+		#add default 
+		current_bt = BTNode.new()
+		var step = PlanStep.new()
+		step.step_type = PlanStep.STEP_TYPE.SEARCH_OBJ_ACTION
+		get_BTNode(current_bt, step, player_position, possible_obj_actions)
+
+	process_BT(current_bt, feedback)
+
+func process_BT(bt_node: BTNode, task_feedback: GLOBAL_DEFINITIONS.AI_FEEDBACK):
+	match bt_node.type:
+		BTInfo.BTNodeType.SELECTOR:
+			for child in bt_node.children:
+				process_BT(bt_node, task_feedback)
+			if task_feedback != GLOBAL_DEFINITIONS.AI_FEEDBACK.FAILED:
+				return task_feedback
+			current_step_task = null
+			return GLOBAL_DEFINITIONS.AI_FEEDBACK.FAILED
+		BTInfo.BTNodeType.SEQUENCE:
+			for child in bt_node.children:
+				process_BT(bt_node, task_feedback)
+			if task_feedback != GLOBAL_DEFINITIONS.AI_FEEDBACK.DONE:
+				return task_feedback
+			current_step_task = null
+			return GLOBAL_DEFINITIONS.AI_FEEDBACK.DONE
+		BTInfo.BTNodeType.TASK:
+			if current_step_task == null:
+				current_step_task = bt_node.step
+			if bt_node.step == current_step_task:
+				return task_feedback
+
