@@ -121,7 +121,7 @@ func execute_step(step: PlanStep):
 					agent_input.kicking = true
 			return GLOBAL_DEFINITIONS.AI_FEEDBACK.DONE
 		_:
-			pass
+			return GLOBAL_DEFINITIONS.AI_FEEDBACK.DONE
 
 func check_completion(step: PlanStep, navigation_completed: bool):
 	match step.step_type:

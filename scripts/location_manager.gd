@@ -275,7 +275,7 @@ func search_graph(hierarchy: LocationHierarchyNode, start: String, end: String) 
 			step.position = link.start_position
 			end_position = link.end_position
 			step.name = link.source_name + "->" + link.dest_name 
-		step.step_type = PlanStep.STEP_TYPE.GOTO_LOCATION
+		step.step_type = PlanStep.STEP_TYPE.GOTO_POSITION
 		path.append(step)
 		if link.crossing_rule != LocationGraphLink.CROSSING_RULE.NONE:
 			var new_step = PlanStep.new()

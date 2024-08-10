@@ -218,21 +218,22 @@ func get_BTNode(btNode: BTNode, step: PlanStep, player_position: Vector3, possib
 		
 		PlanStep.STEP_TYPE.SEARCH_OBJ_ACTION:
 			var obj_action = pick_obj_action(possible_obj_actions)
+			if obj_action != null:
 			
-			var reach_step = PlanStep.new()
-			reach_step.step_type = PlanStep.STEP_TYPE.GOTO_POSITION
-			reach_step.position = obj_action.object.position
-			var execute_step = PlanStep.new()
-			execute_step.step_type = PlanStep.STEP_TYPE.EXECUTE_OBJ_ACTION
-			execute_step.object_id = obj_action.object.get_instance_id()
-			execute_step.object_action_id = obj_action.object_action_id
+				var reach_step = PlanStep.new()
+				reach_step.step_type = PlanStep.STEP_TYPE.GOTO_POSITION
+				reach_step.position = obj_action.object.position
+				var execute_step = PlanStep.new()
+				execute_step.step_type = PlanStep.STEP_TYPE.EXECUTE_OBJ_ACTION
+				execute_step.object_id = obj_action.object.get_instance_id()
+				execute_step.object_action_id = obj_action.object_action_id
 
-			var object_position = obj_action.object.position
-			var distance = player_position.distance_to(object_position)
-			if distance >= GLOBAL_DEFINITIONS.MIN_DISTANCE_TO_EXECUTE_ACTION:
-				fill_bt_node_seq(btNode, [reach_step, execute_step])
-			else:
-				fill_bt_node_seq(btNode, [execute_step])
+				var object_position = obj_action.object.position
+				var distance = player_position.distance_to(object_position)
+				if distance >= GLOBAL_DEFINITIONS.MIN_DISTANCE_TO_EXECUTE_ACTION:
+					fill_bt_node_seq(btNode, [reach_step, execute_step])
+				else:
+					fill_bt_node_seq(btNode, [execute_step])
 		PlanStep.STEP_TYPE.SEARCH_OBJ_ACTION:
 			var expansion_rule: BTInfo = BtRulesManager.get_bt_info(step.name)
 			btNode.type = expansion_rule.type
@@ -253,9 +254,10 @@ func get_BTNode(btNode: BTNode, step: PlanStep, player_position: Vector3, possib
 
 
 func update(player_position: Vector3, possible_obj_actions: Array, feedback: GLOBAL_DEFINITIONS.AI_FEEDBACK, minutes: int):
+	var should_abort = false
 	update_needs(state.needs, null)
 	
-	if not current_bt:
+	if current_bt == null:
 		#check schedule
 		for event in day_schedules:
 			if event == current_event:
@@ -271,27 +273,55 @@ func update(player_position: Vector3, possible_obj_actions: Array, feedback: GLO
 		step.step_type = PlanStep.STEP_TYPE.SEARCH_OBJ_ACTION
 		get_BTNode(current_bt, step, player_position, possible_obj_actions)
 
-	process_BT(current_bt, feedback)
+	if feedback != GLOBAL_DEFINITIONS.AI_FEEDBACK.RUNNING:
+		var outcome = process_BT(current_bt, feedback)
+		if outcome != ProcessReturn.WAIT:
+			current_bt = null
+	
+	return should_abort
 
-func process_BT(bt_node: BTNode, task_feedback: GLOBAL_DEFINITIONS.AI_FEEDBACK):
+enum ProcessReturn {BRANCH_DONE, SUCCESS, FAILURE, WAIT}
+
+func process_BT(bt_node: BTNode, task_feedback: GLOBAL_DEFINITIONS.AI_FEEDBACK) -> ProcessReturn:
 	match bt_node.type:
 		BTInfo.BTNodeType.SELECTOR:
 			for child in bt_node.children:
-				process_BT(bt_node, task_feedback)
-			if task_feedback != GLOBAL_DEFINITIONS.AI_FEEDBACK.FAILED:
-				return task_feedback
-			current_step_task = null
-			return GLOBAL_DEFINITIONS.AI_FEEDBACK.FAILED
+				var outcome = process_BT(child, task_feedback)
+				if outcome == ProcessReturn.BRANCH_DONE:
+					continue
+				if outcome == ProcessReturn.SUCCESS:
+					return ProcessReturn.SUCCESS
+				if outcome == ProcessReturn.FAILURE:
+					continue
+				if outcome == ProcessReturn.WAIT:
+					return ProcessReturn.WAIT
+			return ProcessReturn.SUCCESS
 		BTInfo.BTNodeType.SEQUENCE:
-			for child in bt_node.children:
-				process_BT(bt_node, task_feedback)
-			if task_feedback != GLOBAL_DEFINITIONS.AI_FEEDBACK.DONE:
-				return task_feedback
-			current_step_task = null
-			return GLOBAL_DEFINITIONS.AI_FEEDBACK.DONE
+			for idx in bt_node.children.size():
+				var child = bt_node.children[idx]
+				var outcome = process_BT(child, task_feedback)
+				if outcome == ProcessReturn.BRANCH_DONE:
+					continue
+				if outcome == ProcessReturn.SUCCESS:
+					continue
+				if outcome == ProcessReturn.FAILURE:
+					return ProcessReturn.FAILURE
+				if outcome == ProcessReturn.WAIT:
+					return ProcessReturn.WAIT
+			return ProcessReturn.SUCCESS
 		BTInfo.BTNodeType.TASK:
 			if current_step_task == null:
 				current_step_task = bt_node.step
+				return ProcessReturn.WAIT
 			if bt_node.step == current_step_task:
-				return task_feedback
+				if task_feedback == GLOBAL_DEFINITIONS.AI_FEEDBACK.FAILED:
+					current_step_task = null
+					return ProcessReturn.FAILURE
+				if task_feedback == GLOBAL_DEFINITIONS.AI_FEEDBACK.DONE:
+					current_step_task = null
+					return ProcessReturn.SUCCESS
+			return ProcessReturn.BRANCH_DONE
+		_: return ProcessReturn.BRANCH_DONE 
+
+			
 
