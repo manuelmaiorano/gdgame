@@ -13,8 +13,16 @@ func pick():
 	freeze = true
 	$CollisionShape3D.disabled = true
 	self.hide()
-	
 
+func include_in_utility_search():
+	return false
+
+func get_type():
+	return GLOBAL_DEFINITIONS.OBJECTS.PISTOL
+	
+func get_item_desc():
+	return "Gun"
+	
 func get_possible_actions(player_id):
 	if picked:
 		return []
@@ -35,3 +43,9 @@ func act(action: ACTION, player_id):
 
 func get_object_id():
 	return GLOBAL_DEFINITIONS.OBJECTS.PISTOL
+
+func equip():
+	self.show()
+
+func unequip():
+	self.hide()

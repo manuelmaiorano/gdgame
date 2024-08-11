@@ -34,3 +34,10 @@ class ObjectAdvertisement:
 	var fun: float
 	var social: float
 	var room: float
+
+
+class InventoryItem:
+	var object
+	var type: OBJECTS
+
+const INVENTORY_SPACE = 8

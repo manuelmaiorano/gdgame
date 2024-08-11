@@ -28,6 +28,7 @@ var motion = Vector2()
 @onready var player_model = $Human_rig
 @onready var action_label = $ControllablePlayer/UI/Actions/RichTextLabel
 @onready var close_interaction_area = $InteractionAreas/CloseInteraction
+@onready var far_interaction_area = $InteractionAreas/FarInteraction
 @onready var navigation_agent: NavigationAgent3D = $NavigationAgent3D
 
 
@@ -64,6 +65,9 @@ class ActionInfo:
 
 @onready var controlled_by_player = false
 
+@onready var inventory: Array[GLOBAL_DEFINITIONS.InventoryItem] = []
+@onready var equipped_item = null
+
 func _ready():
 	Characters.register(self)
 	if name == Characters.player_controlled_character:
@@ -76,9 +80,13 @@ func _ready():
 		set_process(false)
 	navigation_agent.velocity_computed.connect(Callable(_on_velocity_computed))
 	
-	close_interaction_area.area_entered.connect(_on_close_interaction_entered)
-	close_interaction_area.area_exited.connect(_on_close_interaction_exited)
 	close_interaction_area.body_entered.connect(_on_body_collision)
+	if controlled_by_player:
+		close_interaction_area.area_entered.connect(_on_interaction_entered)
+		close_interaction_area.area_exited.connect(_on_interaction_exited)
+	else:
+		far_interaction_area.area_entered.connect(_on_interaction_entered)
+		far_interaction_area.area_exited.connect(_on_interaction_exited)
 	
 	if not controlled_by_player:
 		$ControllablePlayer/UI.hide()
@@ -239,8 +247,8 @@ func apply_input(delta: float):
 		return
 	
 	# pistol hide
-	if not agent_input.aiming and current_pistol:
-		current_pistol.hide()
+	# if not agent_input.aiming and current_pistol:
+	# 	current_pistol.hide()
 
 	# Jump/in-air logic.
 	airborne_time += delta
@@ -366,9 +374,16 @@ func execute_action(action_info: ActionInfo):
 	match action_info.player_action_id:
 		GLOBAL_DEFINITIONS.CHARACTER_ACTION.PICK: 
 			animation_tree["parameters/state/transition_request"] = "pick"
+			var item = GLOBAL_DEFINITIONS.InventoryItem.new()
+			item.object = action_info.object
+			item.type = action_info.object.get_type()
+			item.object.reparent($Human_rig/GeneralSkeleton/GunBone/ShootFrom)
+			item.object.transform = Transform3D(Basis.from_euler(Vector3(-1.57, -1.57 , 0)), Vector3(0, 0, 0))
+			inventory.append(item)
+			$ControllablePlayer/UI.update_inventory(inventory, object)
+			object.equip()
 			current_pistol = object
 			current_pistol.reparent($Human_rig/GeneralSkeleton/GunBone/ShootFrom)
-			#current_pistol.transform = Transform3D(Basis(Quaternion(0.51, 0.53, 0.47, -0.48)), Vector3(-0.01, -0.014, 0.048))
 			current_pistol.transform = Transform3D(Basis.from_euler(Vector3(-1.57, -1.57 , 0)), Vector3(0, 0, 0))
 		GLOBAL_DEFINITIONS.CHARACTER_ACTION.THROW: 
 			animation_tree["parameters/state/transition_request"] = "throw"
@@ -431,14 +446,14 @@ func _on_actions_update(object):
 	update_action_labels_list()
 	
 
-func _on_close_interaction_entered(area):
+func _on_interaction_entered(area):
 	var object = area.get_parent()
 	if not object.has_method("get_possible_actions"):
 		return
 	_on_actions_update(object)
 	object.state_changed.connect(_on_actions_update)
 	
-func _on_close_interaction_exited(area):
+func _on_interaction_exited(area):
 	var object = area.get_parent()
 	if not object.has_method("get_possible_actions"):
 		return

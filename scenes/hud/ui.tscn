@@ -1,6 +1,16 @@
-[gd_scene load_steps=2 format=3 uid="uid://df01of28a08gj"]
+[gd_scene load_steps=6 format=3 uid="uid://df01of28a08gj"]
+
+[ext_resource type="PackedScene" uid="uid://cikulqah4pl00" path="res://scenes/hud/inventory_item.tscn" id="1_nkb51"]
+[ext_resource type="Script" path="res://scripts/ui/ui_controller.gd" id="1_scdny"]
 
 [sub_resource type="Theme" id="Theme_2p2n2"]
+
+[sub_resource type="LabelSettings" id="LabelSettings_m5wan"]
+outline_size = 2
+outline_color = Color(0.000693898, 0.000693898, 0.000693898, 1)
+
+[sub_resource type="LabelSettings" id="LabelSettings_rdf7j"]
+font_size = 8
 
 [node name="UI" type="Control"]
 layout_mode = 3
@@ -9,6 +19,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+script = ExtResource("1_scdny")
 
 [node name="Actions" type="MarginContainer" parent="."]
 layout_mode = 1
@@ -28,15 +39,85 @@ theme = SubResource("Theme_2p2n2")
 text = "
 "
 
-[node name="Health" type="MarginContainer" parent="."]
+[node name="InventoryContainer" type="AspectRatioContainer" parent="."]
 layout_mode = 1
-anchors_preset = 2
-anchor_top = 1.0
-anchor_bottom = 1.0
-offset_top = -27.0
-offset_right = 417.0
+anchors_preset = -1
+anchor_left = 0.0130208
+anchor_top = 0.70679
+anchor_right = 0.225694
+anchor_bottom = 0.976852
 grow_vertical = 0
+ratio = 1.3195
+metadata/_edit_use_anchors_ = true
 
-[node name="ProgressBar" type="ProgressBar" parent="Health"]
+[node name="Inventory" type="VBoxContainer" parent="InventoryContainer"]
 layout_mode = 2
-value = 60.0
+metadata/_edit_use_anchors_ = true
+
+[node name="Panel" type="Panel" parent="InventoryContainer/Inventory"]
+layout_mode = 2
+size_flags_vertical = 3
+size_flags_stretch_ratio = 1.25
+
+[node name="Title" type="Label" parent="InventoryContainer/Inventory/Panel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+size_flags_vertical = 3
+size_flags_stretch_ratio = 1.2
+theme_override_font_sizes/font_size = 14
+text = "  Inventory"
+label_settings = SubResource("LabelSettings_m5wan")
+vertical_alignment = 1
+
+[node name="items" type="GridContainer" parent="InventoryContainer/Inventory"]
+layout_mode = 2
+size_flags_vertical = 3
+size_flags_stretch_ratio = 4.74
+columns = 4
+
+[node name="InventoryItem" parent="InventoryContainer/Inventory/items" instance=ExtResource("1_nkb51")]
+layout_mode = 2
+
+[node name="InventoryItem2" parent="InventoryContainer/Inventory/items" instance=ExtResource("1_nkb51")]
+layout_mode = 2
+
+[node name="InventoryItem3" parent="InventoryContainer/Inventory/items" instance=ExtResource("1_nkb51")]
+layout_mode = 2
+
+[node name="InventoryItem4" parent="InventoryContainer/Inventory/items" instance=ExtResource("1_nkb51")]
+layout_mode = 2
+
+[node name="InventoryItem5" parent="InventoryContainer/Inventory/items" instance=ExtResource("1_nkb51")]
+layout_mode = 2
+
+[node name="InventoryItem6" parent="InventoryContainer/Inventory/items" instance=ExtResource("1_nkb51")]
+layout_mode = 2
+
+[node name="InventoryItem7" parent="InventoryContainer/Inventory/items" instance=ExtResource("1_nkb51")]
+layout_mode = 2
+
+[node name="InventoryItem8" parent="InventoryContainer/Inventory/items" instance=ExtResource("1_nkb51")]
+layout_mode = 2
+
+[node name="Panel2" type="Panel" parent="InventoryContainer/Inventory"]
+layout_mode = 2
+size_flags_vertical = 3
+size_flags_stretch_ratio = 0.85
+
+[node name="Instructions" type="Label" parent="InventoryContainer/Inventory/Panel2"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+size_flags_vertical = 3
+size_flags_stretch_ratio = 1.11
+theme_override_font_sizes/font_size = 10
+text = "  Enter to equip"
+label_settings = SubResource("LabelSettings_rdf7j")
+vertical_alignment = 1

@@ -120,6 +120,8 @@ func pick_obj_action(possible_actions: Array):
 	var scores: Array[ActionScore] = []
 	for idx in possible_actions.size():
 		var action_info = possible_actions[idx]
+		if not action_info.object.include_in_utility_search():
+			continue
 		#get action score
 		var adv: GLOBAL_DEFINITIONS.ObjectAdvertisement = action_info.object.get_action_adv(action_info.object_action_id)
 		

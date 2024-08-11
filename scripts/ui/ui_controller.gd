@@ -1,0 +1,45 @@
+extends Control
+
+@onready var items = $InventoryContainer/Inventory/items
+@onready var current_selected_idx = 0
+@onready var current_equipped_idx = -1
+@onready var n_items = 0
+@onready var ui_items = items.get_children()
+
+func update_inventory(inventory: Array[GLOBAL_DEFINITIONS.InventoryItem], equipped):
+	inventory = inventory.duplicate()
+	n_items = 0
+	
+	for item in inventory:
+		var ui_item = ui_items[n_items]
+		ui_item.get_node("Container/Label").text = item.object.get_item_desc()
+		
+		if item.object == equipped:
+			current_equipped_idx = n_items
+		n_items += 1
+	
+	set_item_states()
+	
+func _process(delta):
+	if Input.is_action_just_pressed("inventory_scroll_left"):
+		current_selected_idx += 1
+		if current_equipped_idx >= n_items:
+			current_selected_idx = 0
+		set_item_states()
+	if Input.is_action_just_pressed("inventory_scroll_right"):
+		current_selected_idx -= 1
+		if current_equipped_idx < 0:
+			current_selected_idx = n_items-1
+		set_item_states()
+			
+func set_item_states():
+	for idx in ui_items.size():
+		var ui_item = ui_items[idx]
+		if idx == current_selected_idx:
+			ui_item.selected_item()
+		if idx == current_equipped_idx:
+			ui_item.equipped_item()
+		if idx >= n_items:
+			ui_item.disabled_item()
+		else:
+			ui_item.unselected_item()
