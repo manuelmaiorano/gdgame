@@ -1,14 +1,11 @@
-[gd_scene load_steps=4 format=3 uid="uid://cikulqah4pl00"]
+[gd_scene load_steps=3 format=3 uid="uid://cikulqah4pl00"]
 
 [ext_resource type="Script" path="res://scripts/ui/inventory_item.gd" id="1_vb88o"]
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_8rsxh"]
-bg_color = Color(0, 0, 0, 1)
 
 [sub_resource type="LabelSettings" id="LabelSettings_qp3n1"]
 font_size = 8
 
-[node name="InventoryItem" type="Panel"]
+[node name="InventoryItem" type="ColorRect"]
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -16,7 +13,7 @@ grow_horizontal = 2
 grow_vertical = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
-theme_override_styles/panel = SubResource("StyleBoxFlat_8rsxh")
+color = Color(0, 0, 0, 1)
 script = ExtResource("1_vb88o")
 
 [node name="Container" type="VBoxContainer" parent="."]

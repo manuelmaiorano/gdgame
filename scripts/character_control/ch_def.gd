@@ -66,7 +66,7 @@ class ActionInfo:
 @onready var controlled_by_player = false
 
 @onready var inventory: Array[GLOBAL_DEFINITIONS.InventoryItem] = []
-@onready var equipped_item = null
+@onready var equipped_item_idx = -1
 
 func _ready():
 	Characters.register(self)
@@ -90,6 +90,10 @@ func _ready():
 	
 	if not controlled_by_player:
 		$ControllablePlayer/UI.hide()
+
+	if controlled_by_player:
+		$ControllablePlayer/UI.equip.connect(_on_inventory_item_changed)
+
 
 func _on_velocity_computed(safe_velocity: Vector3) -> void:
 	pass
@@ -262,8 +266,7 @@ func apply_input(delta: float):
 	if on_air:
 		if (velocity.y <0): 
 			animate(ANIMATIONS.JUMP_DOWN, delta)
-	elif agent_input.aiming and current_pistol != null:
-		current_pistol.show()
+	elif equipped_item_idx != -1 and agent_input.aiming and inventory[equipped_item_idx].object.get_type() == GLOBAL_DEFINITIONS.OBJECTS.PISTOL != null:
 		# Convert orientation to quaternions for interpolating rotation.
 		var q_from = orientation.basis.get_rotation_quaternion()
 		var q_to = agent_input.get_camera_base_quaternion() if controlled_by_player else agent_input.q_to
@@ -380,7 +383,8 @@ func execute_action(action_info: ActionInfo):
 			item.object.reparent($Human_rig/GeneralSkeleton/GunBone/ShootFrom)
 			item.object.transform = Transform3D(Basis.from_euler(Vector3(-1.57, -1.57 , 0)), Vector3(0, 0, 0))
 			inventory.append(item)
-			$ControllablePlayer/UI.update_inventory(inventory, object)
+			equipped_item_idx = inventory.size()-1
+			$ControllablePlayer/UI.update_inventory(inventory, equipped_item_idx)
 			object.equip()
 			current_pistol = object
 			current_pistol.reparent($Human_rig/GeneralSkeleton/GunBone/ShootFrom)
@@ -463,6 +467,14 @@ func _on_interaction_exited(area):
 	object.state_changed.disconnect(_on_actions_update)
 	update_action_labels_list()
 
+func _on_inventory_item_changed(selected_idx):
+	if selected_idx == equipped_item_idx:
+		inventory[equipped_item_idx].object.unequip()
+		equipped_item_idx = -1
+		return
+	inventory[equipped_item_idx].object.unequip()
+	inventory[selected_idx].object.equip()
+	equipped_item_idx = selected_idx
 
 @rpc("call_local")
 func shoot():

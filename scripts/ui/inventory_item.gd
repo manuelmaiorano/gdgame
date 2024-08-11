@@ -1,14 +1,14 @@
-extends Panel
+extends ColorRect
 
 
 func equipped_item():
-	pass
+	color = Color.RED
 	
 func disabled_item():
-	pass
+	color = Color.GRAY
 	
 func selected_item():
-	pass
+	color = Color.LIGHT_GRAY
 	
 func unselected_item():
-	pass
+	color = Color.BLACK
