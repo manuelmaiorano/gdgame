@@ -63,6 +63,8 @@ class ActionInfo:
 @onready var action_successful = true
 @onready var action_done = false
 @onready var variables: Dictionary = {}
+@onready var variables_stack = []
+@onready var popped_variable = null
 @onready var agent_running = false
 
 @onready var controlled_by_player = false
@@ -110,22 +112,23 @@ func execute_step(step: PlanStep):
 		PlanStep.STEP_TYPE.QUERY_INVENTORY:
 			for item in inventory:
 				if item.type == step.obj_type:
-					variables[step.return_var_name] = item
+					variables_stack.append(item)
 					return GLOBAL_DEFINITIONS.AI_FEEDBACK.DONE
 			return GLOBAL_DEFINITIONS.AI_FEEDBACK.FAILED
 
 		PlanStep.STEP_TYPE.QUERY_CLOSE:
 			for action in possible_actions:
 				if action.object.get_type() == step.obj_type and action.object_action_id == step.object_action_type:
-					variables[step.return_var_name] = action
-					variables["position"] = action.object.global_position
+					variables_stack.append(action)
+					variables_stack.append(action.object.global_position)
 					return GLOBAL_DEFINITIONS.AI_FEEDBACK.DONE
 			return GLOBAL_DEFINITIONS.AI_FEEDBACK.FAILED
 		
 		PlanStep.STEP_TYPE.EQUIP:
 			for idx in inventory.size():
 				var item = inventory[idx]
-				if variables[step.input_var_name] == item:
+				popped_variable = variables_stack.pop_back()
+				if popped_variable == item:
 					equipped_item_idx = idx
 					$ControllablePlayer/UI.update_inventory(inventory, equipped_item_idx)
 					item.equip()
@@ -136,7 +139,8 @@ func execute_step(step: PlanStep):
 			if step.should_run:
 				agent_running = true
 			if step.use_stored_pos:
-				set_movement_target(variables["position"])
+				popped_variable = variables_stack.pop_back()
+				set_movement_target(popped_variable)
 				return GLOBAL_DEFINITIONS.AI_FEEDBACK.RUNNING
 			set_movement_target(step.position)
 			return GLOBAL_DEFINITIONS.AI_FEEDBACK.RUNNING
@@ -157,7 +161,8 @@ func execute_step(step: PlanStep):
 			for idx in possible_actions.size():
 
 				var x = possible_actions[idx]
-				if x == variables[step.input_var_name]:
+				popped_variable = variables_stack.pop_back()
+				if x == popped_variable:
 					agent_input.action_id = idx 
 					return GLOBAL_DEFINITIONS.AI_FEEDBACK.RUNNING
 					
@@ -191,7 +196,7 @@ func check_completion(step: PlanStep, navigation_completed: bool):
 				return GLOBAL_DEFINITIONS.AI_FEEDBACK.RUNNING
 			var pos = step.position
 			if step.use_stored_pos:
-				pos = variables["position"]
+				pos = popped_variable
 			if navigation_completed and global_position.distance_to(pos) < 1.0:
 				agent_running = false
 				return GLOBAL_DEFINITIONS.AI_FEEDBACK.DONE
@@ -448,6 +453,7 @@ func execute_action(action_info: ActionInfo):
 			equipped_item_idx = inventory.size()-1
 			$ControllablePlayer/UI.update_inventory(inventory, equipped_item_idx)
 			object.equip()
+			
 			current_pistol = object
 			current_pistol.reparent($Human_rig/GeneralSkeleton/GunBone/ShootFrom)
 			current_pistol.transform = Transform3D(Basis.from_euler(Vector3(-1.57, -1.57 , 0)), Vector3(0, 0, 0))

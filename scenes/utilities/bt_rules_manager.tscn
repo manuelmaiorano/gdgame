@@ -1,4 +1,4 @@
-[gd_scene load_steps=9 format=3 uid="uid://4i5ljfwb2qlx"]
+[gd_scene load_steps=12 format=3 uid="uid://4i5ljfwb2qlx"]
 
 [ext_resource type="Script" path="res://scripts/btrules_manager.gd" id="1_2g52p"]
 [ext_resource type="Script" path="res://scripts/resource_scripts/planning/step_resource.gd" id="2_b23w8"]
@@ -38,23 +38,6 @@ who = ""
 input_var_name = ""
 return_var_name = ""
 
-[sub_resource type="Resource" id="Resource_b7c32"]
-script = ExtResource("2_b23w8")
-name = ""
-step_type = 12
-object_action_id = 0
-object_action_type = 0
-player_action_id = 0
-position = Vector3(0, 0, 0)
-should_run = false
-use_stored_pos = false
-crossing_rule = 0
-link_end_position = Vector3(0, 0, 0)
-obj_type = 0
-who = ""
-input_var_name = "object"
-return_var_name = ""
-
 [sub_resource type="Resource" id="Resource_m7hlk"]
 script = ExtResource("2_b23w8")
 name = "AcquireObj"
@@ -75,10 +58,68 @@ return_var_name = ""
 [sub_resource type="Resource" id="Resource_iixhe"]
 script = ExtResource("2_w415o")
 parent_step = SubResource("Resource_m7hlk")
-children_steps = Array[ExtResource("2_b23w8")]([SubResource("Resource_kb0hd"), SubResource("Resource_cr2sx"), SubResource("Resource_b7c32")])
+children_steps = Array[ExtResource("2_b23w8")]([SubResource("Resource_kb0hd"), SubResource("Resource_cr2sx")])
 type = 1
+attempts = 0
+
+[sub_resource type="Resource" id="Resource_kwo26"]
+script = ExtResource("2_b23w8")
+name = "AcquireObj"
+step_type = 4
+object_action_id = 0
+object_action_type = 0
+player_action_id = 0
+position = Vector3(0, 0, 0)
+should_run = false
+use_stored_pos = false
+crossing_rule = 0
+link_end_position = Vector3(0, 0, 0)
+obj_type = 0
+who = ""
+input_var_name = ""
+return_var_name = "object"
+
+[sub_resource type="Resource" id="Resource_sd8gf"]
+script = ExtResource("2_b23w8")
+name = ""
+step_type = 12
+object_action_id = 0
+object_action_type = 0
+player_action_id = 0
+position = Vector3(0, 0, 0)
+should_run = false
+use_stored_pos = false
+crossing_rule = 0
+link_end_position = Vector3(0, 0, 0)
+obj_type = 0
+who = ""
+input_var_name = "object"
+return_var_name = ""
+
+[sub_resource type="Resource" id="Resource_scbe1"]
+script = ExtResource("2_b23w8")
+name = "EquipObj"
+step_type = 4
+object_action_id = 0
+object_action_type = 0
+player_action_id = 0
+position = Vector3(0, 0, 0)
+should_run = false
+use_stored_pos = false
+crossing_rule = 0
+link_end_position = Vector3(0, 0, 0)
+obj_type = 0
+who = ""
+input_var_name = ""
+return_var_name = ""
+
+[sub_resource type="Resource" id="Resource_u608t"]
+script = ExtResource("2_w415o")
+parent_step = SubResource("Resource_scbe1")
+children_steps = Array[ExtResource("2_b23w8")]([SubResource("Resource_kwo26"), SubResource("Resource_sd8gf")])
+type = 0
 attempts = 0
 
 [node name="BTRulesManager" type="Node"]
 script = ExtResource("1_2g52p")
-rules = Array[ExtResource("2_w415o")]([SubResource("Resource_iixhe")])
+rules = Array[ExtResource("2_w415o")]([SubResource("Resource_iixhe"), SubResource("Resource_u608t")])
