@@ -8,11 +8,12 @@ var picked = false
 
 func pick():
 	if picked:
-		return
+		return false
 	picked = true
 	freeze = true
 	$CollisionShape3D.disabled = true
 	self.hide()
+	return true
 
 func include_in_utility_search():
 	return false
@@ -37,9 +38,11 @@ func get_action_description(action: ACTION):
 		ACTION.PICK: return "Pick the gun"
 
 func act(action: ACTION, player_id):
+	var outcome = true
 	match action:
-		ACTION.PICK: pick()
+		ACTION.PICK: outcome = pick()
 	state_changed.emit(self)
+	return outcome
 
 func get_object_id():
 	return GLOBAL_DEFINITIONS.OBJECTS.PISTOL

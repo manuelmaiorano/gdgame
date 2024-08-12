@@ -15,6 +15,7 @@ const MIN_DISTANCE_TO_DOOR = 0.1
 var current_event: DaySchedule
 var current_bt: BTNode
 var current_step_task: PlanStep = null
+var current_retry_amount = 0
 
 class BTNode:
 	var step: PlanStep
@@ -226,6 +227,7 @@ func get_BTNode(btNode: BTNode, step: PlanStep, player_position: Vector3, possib
 			
 				var reach_step = PlanStep.new()
 				reach_step.step_type = PlanStep.STEP_TYPE.GOTO_POSITION
+				reach_step.should_run = step.should_run
 				reach_step.position = obj_action.object.position
 				var execute_step = PlanStep.new()
 				execute_step.step_type = PlanStep.STEP_TYPE.EXECUTE_OBJ_ACTION
@@ -245,26 +247,29 @@ func get_BTNode(btNode: BTNode, step: PlanStep, player_position: Vector3, possib
 			query_step.step_type = PlanStep.STEP_TYPE.QUERY_CLOSE
 			query_step.obj_type = step.obj_type
 			query_step.object_action_type = step.object_action_type
-			query_step.var_name = step.var_name
+			query_step.return_var_name = "obj"
 
 			var reach_step = PlanStep.new()
 			reach_step.step_type = PlanStep.STEP_TYPE.GOTO_POSITION
-			reach_step.position = null
+			reach_step.should_run = step.should_run
+			reach_step.use_stored_pos = true
 			
 			var execute_step = PlanStep.new()
 			execute_step.step_type = PlanStep.STEP_TYPE.EXECUTE_OBJ_ACTION_STORED
-			execute_step.var_name = step.var_name
+			execute_step.input_var_name = "obj"
 			
 			fill_bt_node_seq(btNode, [query_step, reach_step, execute_step])
 
 		PlanStep.STEP_TYPE.CUSTOM:
 			var expansion_rule: BTInfo = BtRulesManager.get_bt_info(step.name)
 			btNode.type = expansion_rule.type
-			for child_name in expansion_rule.children_step_names:
+			for child in expansion_rule.children_steps:
 				var btNode_child = BTNode.new()
 				btNode_child.step = PlanStep.new()
-				btNode_child.step.name = child_name
-				btNode_child.step.copy_params(step)
+
+				btNode_child.step.name = child.name
+				btNode_child.step.copy_params(child)
+				btNode_child.step.copy_params_from_parent_step(step)
 
 				get_BTNode(btNode_child, btNode_child.step, player_position, possible_obj_actions)
 				btNode_child.parent = btNode
@@ -308,9 +313,11 @@ enum ProcessReturn {BRANCH_DONE, SUCCESS, FAILURE, WAIT}
 func process_BT(bt_node: BTNode, task_feedback: GLOBAL_DEFINITIONS.AI_FEEDBACK) -> ProcessReturn:
 	match bt_node.type:
 		BTInfo.BTNodeType.SELECTOR:
+			var branches = 0
 			for child in bt_node.children:
 				var outcome = process_BT(child, task_feedback)
 				if outcome == ProcessReturn.BRANCH_DONE:
+					branches += 1
 					continue
 				if outcome == ProcessReturn.SUCCESS:
 					return ProcessReturn.SUCCESS
@@ -318,12 +325,16 @@ func process_BT(bt_node: BTNode, task_feedback: GLOBAL_DEFINITIONS.AI_FEEDBACK) 
 					continue
 				if outcome == ProcessReturn.WAIT:
 					return ProcessReturn.WAIT
-			return ProcessReturn.SUCCESS
+			if branches == bt_node.children.size():
+				return ProcessReturn.BRANCH_DONE
+			return ProcessReturn.FAILURE
 		BTInfo.BTNodeType.SEQUENCE:
+			var branches = 0
 			for idx in bt_node.children.size():
 				var child = bt_node.children[idx]
 				var outcome = process_BT(child, task_feedback)
 				if outcome == ProcessReturn.BRANCH_DONE:
+					branches += 1
 					continue
 				if outcome == ProcessReturn.SUCCESS:
 					continue
@@ -331,7 +342,26 @@ func process_BT(bt_node: BTNode, task_feedback: GLOBAL_DEFINITIONS.AI_FEEDBACK) 
 					return ProcessReturn.FAILURE
 				if outcome == ProcessReturn.WAIT:
 					return ProcessReturn.WAIT
+			if branches == bt_node.children.size():
+				return ProcessReturn.BRANCH_DONE
 			return ProcessReturn.SUCCESS
+		BTInfo.BTNodeType.RETRY:
+			while current_retry_amount < bt_node.amount:
+				current_retry_amount += 1
+				var child = bt_node.children[0]
+				var outcome = process_BT(child, task_feedback)
+				if outcome == ProcessReturn.BRANCH_DONE:
+					current_retry_amount = 0
+					return ProcessReturn.BRANCH_DONE
+				if outcome == ProcessReturn.SUCCESS:
+					current_retry_amount = 0
+					return ProcessReturn.SUCCESS
+				if outcome == ProcessReturn.FAILURE:
+					continue
+				if outcome == ProcessReturn.WAIT:
+					return ProcessReturn.WAIT
+			current_retry_amount = 0
+			return ProcessReturn.FAILURE
 		BTInfo.BTNodeType.TASK:
 			if current_step_task == null:
 				current_step_task = bt_node.step

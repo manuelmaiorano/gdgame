@@ -63,6 +63,7 @@ class ActionInfo:
 @onready var action_successful = true
 @onready var action_done = false
 @onready var variables: Dictionary = {}
+@onready var agent_running = false
 
 @onready var controlled_by_player = false
 
@@ -94,6 +95,9 @@ func _ready():
 
 	if controlled_by_player:
 		$ControllablePlayer/UI.equip.connect(_on_inventory_item_changed)
+	
+	if not controlled_by_player:
+		agent_input.action_id = -1
 
 
 func _on_velocity_computed(safe_velocity: Vector3) -> void:
@@ -106,14 +110,14 @@ func execute_step(step: PlanStep):
 		PlanStep.STEP_TYPE.QUERY_INVENTORY:
 			for item in inventory:
 				if item.type == step.obj_type:
-					variables[step.var_name] = item
+					variables[step.return_var_name] = item
 					return GLOBAL_DEFINITIONS.AI_FEEDBACK.DONE
 			return GLOBAL_DEFINITIONS.AI_FEEDBACK.FAILED
 
 		PlanStep.STEP_TYPE.QUERY_CLOSE:
 			for action in possible_actions:
 				if action.object.get_type() == step.obj_type and action.object_action_id == step.object_action_type:
-					variables[step.var_name] = action
+					variables[step.return_var_name] = action
 					variables["position"] = action.object.global_position
 					return GLOBAL_DEFINITIONS.AI_FEEDBACK.DONE
 			return GLOBAL_DEFINITIONS.AI_FEEDBACK.FAILED
@@ -121,7 +125,7 @@ func execute_step(step: PlanStep):
 		PlanStep.STEP_TYPE.EQUIP:
 			for idx in inventory.size():
 				var item = inventory[idx]
-				if variables[step.var_name] == item:
+				if variables[step.input_var_name] == item:
 					equipped_item_idx = idx
 					$ControllablePlayer/UI.update_inventory(inventory, equipped_item_idx)
 					item.equip()
@@ -129,7 +133,9 @@ func execute_step(step: PlanStep):
 			return GLOBAL_DEFINITIONS.AI_FEEDBACK.FAILED
 
 		PlanStep.STEP_TYPE.GOTO_POSITION:
-			if step.position == null:
+			if step.should_run:
+				agent_running = true
+			if step.use_stored_pos:
 				set_movement_target(variables["position"])
 				return GLOBAL_DEFINITIONS.AI_FEEDBACK.RUNNING
 			set_movement_target(step.position)
@@ -141,7 +147,7 @@ func execute_step(step: PlanStep):
 
 				var x = possible_actions[idx]
 				if x.get_instance_id() == step.object_action_id:
-					agent_input.action_id = idx
+					agent_input.action_id = idx 
 					return GLOBAL_DEFINITIONS.AI_FEEDBACK.RUNNING
 					
 			return GLOBAL_DEFINITIONS.AI_FEEDBACK.FAILED
@@ -151,8 +157,8 @@ func execute_step(step: PlanStep):
 			for idx in possible_actions.size():
 
 				var x = possible_actions[idx]
-				if x == variables[step.var_name]:
-					agent_input.action_id = idx
+				if x == variables[step.input_var_name]:
+					agent_input.action_id = idx 
 					return GLOBAL_DEFINITIONS.AI_FEEDBACK.RUNNING
 					
 			return GLOBAL_DEFINITIONS.AI_FEEDBACK.FAILED
@@ -163,7 +169,7 @@ func execute_step(step: PlanStep):
 
 				var x = possible_actions[idx]
 				if global_position.distance_to(x.object.global_position) < GLOBAL_DEFINITIONS.MIN_DISTANCE_TO_EXECUTE_ACTION and x.action_id == step.object_action_type:
-					agent_input.action_id = idx
+					agent_input.action_id = idx 
 					return GLOBAL_DEFINITIONS.AI_FEEDBACK.RUNNING
 					
 			return GLOBAL_DEFINITIONS.AI_FEEDBACK.FAILED
@@ -183,17 +189,22 @@ func check_completion(step: PlanStep, navigation_completed: bool):
 		PlanStep.STEP_TYPE.GOTO_POSITION:
 			if not navigation_completed:
 				return GLOBAL_DEFINITIONS.AI_FEEDBACK.RUNNING
-			if navigation_completed and global_position.distance_to(step.position) < 1.0:
+			var pos = step.position
+			if step.use_stored_pos:
+				pos = variables["position"]
+			if navigation_completed and global_position.distance_to(pos) < 1.0:
+				agent_running = false
+				return GLOBAL_DEFINITIONS.AI_FEEDBACK.DONE
+			agent_running = false
+			return GLOBAL_DEFINITIONS.AI_FEEDBACK.FAILED
+
+	if step.step_type == PlanStep.STEP_TYPE.EXECUTE_OBJ_ACTION_BY_ACTION_TYPE or step.step_type == PlanStep.STEP_TYPE.EXECUTE_OBJ_ACTION or step.step_type == PlanStep.STEP_TYPE.EXECUTE_OBJ_ACTION_STORED:
+		if action_done:
+			if action_successful:
 				return GLOBAL_DEFINITIONS.AI_FEEDBACK.DONE
 			return GLOBAL_DEFINITIONS.AI_FEEDBACK.FAILED
-		PlanStep.STEP_TYPE.EXECUTE_OBJ_ACTION_BY_ACTION_TYPE or PlanStep.STEP_TYPE.EXECUTE_OBJ_ACTION:
-			if action_done:
-				if action_successful:
-					return GLOBAL_DEFINITIONS.AI_FEEDBACK.DONE
-				return GLOBAL_DEFINITIONS.AI_FEEDBACK.FAILED
-			return GLOBAL_DEFINITIONS.AI_FEEDBACK.RUNNING
-		_:
-			pass
+		return GLOBAL_DEFINITIONS.AI_FEEDBACK.RUNNING
+
 
 func abort(step: PlanStep):
 	match step.step_type:
@@ -206,7 +217,6 @@ func update_ai(player_position: Vector3, possible_obj_actions: Array[ActionInfo]
 	var should_abort = $AI.update(player_position, possible_obj_actions, step_execution_state, CurrentTimeManager.get_current_time_in_minutes())
 	var current_step: PlanStep = $AI.current_step_task
 	if current_step:
-		DebugView.print_debug_info("STEP: %s" % current_step.name, self)
 		match step_execution_state:
 			GLOBAL_DEFINITIONS.AI_FEEDBACK.DONE:
 				step_execution_state = execute_step(current_step)
@@ -214,7 +224,12 @@ func update_ai(player_position: Vector3, possible_obj_actions: Array[ActionInfo]
 				step_execution_state = execute_step(current_step)
 			GLOBAL_DEFINITIONS.AI_FEEDBACK.RUNNING:
 				step_execution_state = check_completion(current_step, navigation_agent.is_navigation_finished())
-
+		var step_type_str = PlanStep.STEP_TYPE.keys()[current_step.step_type]
+		var exec_state_str = GLOBAL_DEFINITIONS.AI_FEEDBACK.keys()[step_execution_state]
+		DebugView.print_debug_info("STEP: %s\n 	TYPE: %s\n	STATE: %s" % [current_step.name, step_type_str, exec_state_str], self)
+	else:
+		DebugView.print_debug_info("STEP: \n 	TYPE: " , self)
+		
 	if should_abort:
 		abort(current_step)
 		step_execution_state = GLOBAL_DEFINITIONS.AI_FEEDBACK.DONE
@@ -261,7 +276,10 @@ func animate(anim: int, delta:=0.0):
 		animation_tree["parameters/state/transition_request"] = "walk"
 		animation_tree["parameters/walk/blend_position"] = motion.length()
 		# Blend position for walk speed based checked motion.
-		if agent_input.running:
+		var should_run = agent_input.running
+		if not controlled_by_player:
+			should_run = agent_running
+		if should_run:
 			animation_tree["parameters/run/transition_request"] = "run"
 		else:
 			animation_tree["parameters/run/transition_request"] = "walk"
@@ -274,6 +292,7 @@ func apply_input(delta: float):
 		return
 	if controlled_by_player:
 		agent_input = player_input
+	
 	motion = motion.lerp(agent_input.motion, MOTION_INTERPOLATE_SPEED * delta)
 
 	var camera_basis : Basis =  agent_input.get_camera_rotation_basis() if controlled_by_player else Basis(orientation.basis)
@@ -402,18 +421,20 @@ func apply_input(delta: float):
 
 	
 func _process(delta):
-	
-	if agent_input.action_id > 0:
+	if controlled_by_player:
+		agent_input.action_id -= 1
+	if agent_input.action_id >= 0:
 		#do_action_by_number(agent_input.action_id)
 		action_successful = do_action_by_number_list(agent_input.action_id)
+		agent_input.action_id = -1
 		action_done = true
 		
 func execute_action(action_info: ActionInfo):
 	var object = action_info.object
 	var is_successful = object.act(action_info.object_action_id, player_id)
-	if not controlled_by_player and not is_successful:
+	if  not is_successful:
 		return false
-	if not controlled_by_player:
+	if not controlled_by_player and object.include_in_utility_search():
 		$AI.fulfill_object_adv(object.get_action_adv(action_info.object_action_id))
 	match action_info.player_action_id:
 		GLOBAL_DEFINITIONS.CHARACTER_ACTION.PICK: 
@@ -459,9 +480,7 @@ func execute_action(action_info: ActionInfo):
 	return true
 	
 func do_action_by_number_list(num):
-	if controlled_by_player:
-		num -= 1
-	if num < possible_actions.size():
+	if num < possible_actions.size() and num >= 0:
 		return execute_action(possible_actions[num])
 	return false
 
