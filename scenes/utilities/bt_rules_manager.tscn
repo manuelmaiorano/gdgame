@@ -1,6 +1,30 @@
-[gd_scene load_steps=2 format=3 uid="uid://4i5ljfwb2qlx"]
+[gd_scene load_steps=6 format=3 uid="uid://4i5ljfwb2qlx"]
 
 [ext_resource type="Script" path="res://scripts/btrules_manager.gd" id="1_2g52p"]
+[ext_resource type="Script" path="res://scripts/resource_scripts/planning/step_resource.gd" id="2_b23w8"]
+[ext_resource type="Script" path="res://scripts/resource_scripts/planning/bt_resource.gd" id="2_w415o"]
+
+[sub_resource type="Resource" id="Resource_m7hlk"]
+script = ExtResource("2_b23w8")
+name = "Find Gun"
+step_type = 4
+object_action_id = 0
+object_action_type = 0
+player_action_id = 0
+position = Vector3(0, 0, 0)
+crossing_rule = 0
+link_end_position = Vector3(0, 0, 0)
+obj_type = 1
+who = ""
+var_name = "Gun"
+
+[sub_resource type="Resource" id="Resource_iixhe"]
+script = ExtResource("2_w415o")
+parent_step = SubResource("Resource_m7hlk")
+children_step_names = Array[String](["query close", "find obj", "equip"])
+type = 1
+attempts = 0
 
 [node name="BTRulesManager" type="Node"]
 script = ExtResource("1_2g52p")
+rules = Array[ExtResource("2_w415o")]([SubResource("Resource_iixhe")])

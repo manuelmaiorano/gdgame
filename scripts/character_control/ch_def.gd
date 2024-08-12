@@ -62,6 +62,7 @@ class ActionInfo:
 @onready var step_execution_state = GLOBAL_DEFINITIONS.AI_FEEDBACK.DONE
 @onready var action_successful = true
 @onready var action_done = false
+@onready var variables: Dictionary = {}
 
 @onready var controlled_by_player = false
 
@@ -102,26 +103,66 @@ func _on_velocity_computed(safe_velocity: Vector3) -> void:
 
 func execute_step(step: PlanStep):
 	match step.step_type:
+		PlanStep.STEP_TYPE.QUERY_INVENTORY:
+			for item in inventory:
+				if item.type == step.obj_type:
+					variables[step.var_name] = item
+					return GLOBAL_DEFINITIONS.AI_FEEDBACK.DONE
+			return GLOBAL_DEFINITIONS.AI_FEEDBACK.FAILED
+
+		PlanStep.STEP_TYPE.QUERY_CLOSE:
+			for action in possible_actions:
+				if action.object.get_type() == step.obj_type and action.object_action_id == step.object_action_type:
+					variables[step.var_name] = action
+					variables["position"] = action.object.global_position
+					return GLOBAL_DEFINITIONS.AI_FEEDBACK.DONE
+			return GLOBAL_DEFINITIONS.AI_FEEDBACK.FAILED
+		
+		PlanStep.STEP_TYPE.EQUIP:
+			for idx in inventory.size():
+				var item = inventory[idx]
+				if variables[step.var_name] == item:
+					equipped_item_idx = idx
+					$ControllablePlayer/UI.update_inventory(inventory, equipped_item_idx)
+					item.equip()
+					return GLOBAL_DEFINITIONS.AI_FEEDBACK.DONE
+			return GLOBAL_DEFINITIONS.AI_FEEDBACK.FAILED
+
 		PlanStep.STEP_TYPE.GOTO_POSITION:
+			if step.position == null:
+				set_movement_target(variables["position"])
+				return GLOBAL_DEFINITIONS.AI_FEEDBACK.RUNNING
 			set_movement_target(step.position)
 			return GLOBAL_DEFINITIONS.AI_FEEDBACK.RUNNING
+
 		PlanStep.STEP_TYPE.EXECUTE_OBJ_ACTION:
 			action_done = false
 			for idx in possible_actions.size():
 
 				var x = possible_actions[idx]
-				if x.object.get_instance_id() == step.object_id and x.action_id == step.object_action_id:
+				if x.get_instance_id() == step.object_action_id:
 					agent_input.action_id = idx
 					return GLOBAL_DEFINITIONS.AI_FEEDBACK.RUNNING
 					
 			return GLOBAL_DEFINITIONS.AI_FEEDBACK.FAILED
 		
-		PlanStep.STEP_TYPE.EXECUTE_OBJ_ACTION_BY_ACTION_ID:
+		PlanStep.STEP_TYPE.EXECUTE_OBJ_ACTION_STORED:
 			action_done = false
 			for idx in possible_actions.size():
 
 				var x = possible_actions[idx]
-				if global_position.distance_to(x.object.global_position) < GLOBAL_DEFINITIONS.MIN_DISTANCE_TO_EXECUTE_ACTION and x.action_id == step.object_action_id:
+				if x == variables[step.var_name]:
+					agent_input.action_id = idx
+					return GLOBAL_DEFINITIONS.AI_FEEDBACK.RUNNING
+					
+			return GLOBAL_DEFINITIONS.AI_FEEDBACK.FAILED
+		
+		PlanStep.STEP_TYPE.EXECUTE_OBJ_ACTION_BY_ACTION_TYPE:
+			action_done = false
+			for idx in possible_actions.size():
+
+				var x = possible_actions[idx]
+				if global_position.distance_to(x.object.global_position) < GLOBAL_DEFINITIONS.MIN_DISTANCE_TO_EXECUTE_ACTION and x.action_id == step.object_action_type:
 					agent_input.action_id = idx
 					return GLOBAL_DEFINITIONS.AI_FEEDBACK.RUNNING
 					
@@ -145,7 +186,7 @@ func check_completion(step: PlanStep, navigation_completed: bool):
 			if navigation_completed and global_position.distance_to(step.position) < 1.0:
 				return GLOBAL_DEFINITIONS.AI_FEEDBACK.DONE
 			return GLOBAL_DEFINITIONS.AI_FEEDBACK.FAILED
-		PlanStep.STEP_TYPE.EXECUTE_OBJ_ACTION_BY_ACTION_ID or PlanStep.STEP_TYPE.EXECUTE_OBJ_ACTION:
+		PlanStep.STEP_TYPE.EXECUTE_OBJ_ACTION_BY_ACTION_TYPE or PlanStep.STEP_TYPE.EXECUTE_OBJ_ACTION:
 			if action_done:
 				if action_successful:
 					return GLOBAL_DEFINITIONS.AI_FEEDBACK.DONE

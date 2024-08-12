@@ -135,55 +135,57 @@ func pick_obj_action(possible_actions: Array):
 	scores.sort_custom(func(a, b): return a.score > b.score)
 	var top = scores.slice(0, 3)
 	var chosen = top.pick_random()
-
-	return chosen
 	
-func transform_plan_step(step: PlanStep, player_position: Vector3, possible_obj_actions: Array) -> Array[PlanStep]:
-	var steps = []
-	match step.step_type:
-		PlanStep.STEP_TYPE.GOTO_LOCATION:
-			var pl_loc_name = Locations.get_node_from_position(player_position).name
-			var nav_steps = Locations.plan_navigation_from_names(pl_loc_name, step.location.place_name)
-			steps.append_array(nav_steps)
+	if chosen == null:
+		return null
+
+	return possible_actions[chosen.idx]
+	
+# func transform_plan_step(step: PlanStep, player_position: Vector3, possible_obj_actions: Array) -> Array[PlanStep]:
+# 	var steps = []
+# 	match step.step_type:
+# 		PlanStep.STEP_TYPE.GOTO_LOCATION:
+# 			var pl_loc_name = Locations.get_node_from_position(player_position).name
+# 			var nav_steps = Locations.plan_navigation_from_names(pl_loc_name, step.location.place_name)
+# 			steps.append_array(nav_steps)
 		
-		PlanStep.STEP_TYPE.EXECUTE_LINK_ACTION:
-			match step.crossing_rule:
-				LocationGraphLink.CROSSING_RULE.NONE:
-					steps.append(step)
-				LocationGraphLink.CROSSING_RULE.DOOR:
-					var execute_step = PlanStep.new()
-					execute_step.step_type = PlanStep.STEP_TYPE.EXECUTE_OBJ_ACTION_BY_ACTION_ID
-					execute_step.object_action_id = Door.ACTION.OPEN
-					steps = [execute_step]
-				LocationGraphLink.CROSSING_RULE.CROSSWALK:
-					var reach_step = PlanStep.new()
-					reach_step.step_type = PlanStep.STEP_TYPE.GOTO_POSITION
-					reach_step.position = step.link_end_position
-					steps = [reach_step]
+# 		PlanStep.STEP_TYPE.EXECUTE_LINK_ACTION:
+# 			match step.crossing_rule:
+# 				LocationGraphLink.CROSSING_RULE.NONE:
+# 					steps.append(step)
+# 				LocationGraphLink.CROSSING_RULE.DOOR:
+# 					var execute_step = PlanStep.new()
+# 					execute_step.step_type = PlanStep.STEP_TYPE.EXECUTE_OBJ_ACTION_BY_ACTION_ID
+# 					execute_step.object_action_id = Door.ACTION.OPEN
+# 					steps = [execute_step]
+# 				LocationGraphLink.CROSSING_RULE.CROSSWALK:
+# 					var reach_step = PlanStep.new()
+# 					reach_step.step_type = PlanStep.STEP_TYPE.GOTO_POSITION
+# 					reach_step.position = step.link_end_position
+# 					steps = [reach_step]
 		
-		PlanStep.STEP_TYPE.SEARCH_OBJ_ACTION:
-			var obj_action = pick_obj_action(possible_obj_actions)
+# 		PlanStep.STEP_TYPE.SEARCH_OBJ_ACTION:
+# 			var obj_action = pick_obj_action(possible_obj_actions)
 			
-			var reach_step = PlanStep.new()
-			reach_step.step_type = PlanStep.STEP_TYPE.GOTO_POSITION
-			reach_step.position = obj_action.object.position
-			var execute_step = PlanStep.new()
-			execute_step.step_type = PlanStep.STEP_TYPE.EXECUTE_OBJ_ACTION
-			execute_step.object_id = obj_action.object.get_instance_id()
-			execute_step.object_action_id = obj_action.object_action_id
-			steps = [reach_step, execute_step]
+# 			var reach_step = PlanStep.new()
+# 			reach_step.step_type = PlanStep.STEP_TYPE.GOTO_POSITION
+# 			reach_step.position = obj_action.object.position
+# 			var execute_step = PlanStep.new()
+# 			execute_step.step_type = PlanStep.STEP_TYPE.EXECUTE_OBJ_ACTION
+# 			execute_step.object_action_id = obj_action.get_instance_id()
+# 			steps = [reach_step, execute_step]
 
-			var object_position = obj_action.object.position
-			var distance = player_position.distance_to(object_position)
-			if distance >= GLOBAL_DEFINITIONS.MIN_DISTANCE_TO_EXECUTE_ACTION:
-				steps = [reach_step, execute_step]
-			else:
-				steps = [execute_step]
-		_:
-			steps.append(step)
+# 			var object_position = obj_action.object.position
+# 			var distance = player_position.distance_to(object_position)
+# 			if distance >= GLOBAL_DEFINITIONS.MIN_DISTANCE_TO_EXECUTE_ACTION:
+# 				steps = [reach_step, execute_step]
+# 			else:
+# 				steps = [execute_step]
+# 		_:
+# 			steps.append(step)
 
 
-	return steps
+# 	return steps
 
 func fill_bt_node_seq(bt_node: BTNode, children_steps: Array[PlanStep]):
 	bt_node.type = BTInfo.BTNodeType.SEQUENCE
@@ -209,8 +211,8 @@ func get_BTNode(btNode: BTNode, step: PlanStep, player_position: Vector3, possib
 					btNode.type = BTInfo.BTNodeType.TASK
 				LocationGraphLink.CROSSING_RULE.DOOR:
 					var execute_step = PlanStep.new()
-					execute_step.step_type = PlanStep.STEP_TYPE.EXECUTE_OBJ_ACTION_BY_ACTION_ID
-					execute_step.object_action_id = Door.ACTION.OPEN
+					execute_step.step_type = PlanStep.STEP_TYPE.EXECUTE_OBJ_ACTION_BY_ACTION_TYPE
+					execute_step.object_action_type = Door.ACTION.OPEN
 					fill_bt_node_seq(btNode, [execute_step])
 				LocationGraphLink.CROSSING_RULE.CROSSWALK:
 					var reach_step = PlanStep.new()
@@ -218,7 +220,7 @@ func get_BTNode(btNode: BTNode, step: PlanStep, player_position: Vector3, possib
 					reach_step.position = step.link_end_position
 					fill_bt_node_seq(btNode, [reach_step])
 		
-		PlanStep.STEP_TYPE.SEARCH_OBJ_ACTION:
+		PlanStep.STEP_TYPE.SEARCH_OBJ_ACTION_UTILITY:
 			var obj_action = pick_obj_action(possible_obj_actions)
 			if obj_action != null:
 			
@@ -236,7 +238,26 @@ func get_BTNode(btNode: BTNode, step: PlanStep, player_position: Vector3, possib
 					fill_bt_node_seq(btNode, [reach_step, execute_step])
 				else:
 					fill_bt_node_seq(btNode, [execute_step])
+		
 		PlanStep.STEP_TYPE.SEARCH_OBJ_ACTION:
+			
+			var query_step = PlanStep.new()
+			query_step.step_type = PlanStep.STEP_TYPE.QUERY_CLOSE
+			query_step.obj_type = step.obj_type
+			query_step.object_action_type = step.object_action_type
+			query_step.var_name = step.var_name
+
+			var reach_step = PlanStep.new()
+			reach_step.step_type = PlanStep.STEP_TYPE.GOTO_POSITION
+			reach_step.position = null
+			
+			var execute_step = PlanStep.new()
+			execute_step.step_type = PlanStep.STEP_TYPE.EXECUTE_OBJ_ACTION_STORED
+			execute_step.var_name = step.var_name
+			
+			fill_bt_node_seq(btNode, [query_step, reach_step, execute_step])
+
+		PlanStep.STEP_TYPE.CUSTOM:
 			var expansion_rule: BTInfo = BtRulesManager.get_bt_info(step.name)
 			btNode.type = expansion_rule.type
 			for child_name in expansion_rule.children_step_names:
@@ -272,7 +293,7 @@ func update(player_position: Vector3, possible_obj_actions: Array, feedback: GLO
 		#add default 
 		current_bt = BTNode.new()
 		var step = PlanStep.new()
-		step.step_type = PlanStep.STEP_TYPE.SEARCH_OBJ_ACTION
+		step.step_type = PlanStep.STEP_TYPE.SEARCH_OBJ_ACTION_UTILITY
 		get_BTNode(current_bt, step, player_position, possible_obj_actions)
 
 	if feedback != GLOBAL_DEFINITIONS.AI_FEEDBACK.RUNNING:
