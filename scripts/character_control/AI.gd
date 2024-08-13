@@ -1,4 +1,5 @@
 extends Node3D
+class_name AI
 
 const MIN_DISTANCE_TO_DOOR = 0.1
 
@@ -22,6 +23,7 @@ class BTNode:
 	var children: Array[BTNode]
 	var parent: BTNode
 	var type: BTInfo.BTNodeType
+	var attempts: int
 
 class NpcNeeds:
 	#physical
@@ -241,39 +243,42 @@ func get_BTNode(btNode: BTNode, step: PlanStep, player_position: Vector3, possib
 				else:
 					fill_bt_node_seq(btNode, [execute_step])
 		
-		PlanStep.STEP_TYPE.SEARCH_OBJ_ACTION:
+		# PlanStep.STEP_TYPE.SEARCH_OBJ_ACTION:
 			
-			var query_step = PlanStep.new()
-			query_step.step_type = PlanStep.STEP_TYPE.QUERY_CLOSE
-			query_step.obj_type = step.obj_type
-			query_step.object_action_type = step.object_action_type
-			query_step.return_var_name = "obj"
+		# 	var query_step = PlanStep.new()
+		# 	query_step.step_type = PlanStep.STEP_TYPE.QUERY_CLOSE
+		# 	query_step.obj_type = step.obj_type
+		# 	query_step.object_action_type = step.object_action_type
+		# 	query_step.return_var_name = "obj"
 
-			var reach_step = PlanStep.new()
-			reach_step.step_type = PlanStep.STEP_TYPE.GOTO_POSITION
-			reach_step.should_run = step.should_run
-			reach_step.use_stored_pos = true
+		# 	var reach_step = PlanStep.new()
+		# 	reach_step.step_type = PlanStep.STEP_TYPE.GOTO_POSITION
+		# 	reach_step.should_run = step.should_run
+		# 	reach_step.use_stored_pos = true
 			
-			var execute_step = PlanStep.new()
-			execute_step.step_type = PlanStep.STEP_TYPE.EXECUTE_OBJ_ACTION_STORED
-			execute_step.input_var_name = "obj"
+		# 	var execute_step = PlanStep.new()
+		# 	execute_step.step_type = PlanStep.STEP_TYPE.EXECUTE_OBJ_ACTION_STORED
+		# 	execute_step.input_var_name = "obj"
 			
-			fill_bt_node_seq(btNode, [query_step, reach_step, execute_step])
+		# 	fill_bt_node_seq(btNode, [query_step, reach_step, execute_step])
 
+		# PlanStep.STEP_TYPE.CUSTOM:
+		# 	var expansion_rule: BTInfo = BtRulesManager.get_bt_info(step.name)
+		# 	btNode.type = expansion_rule.type
+		# 	for child in expansion_rule.children_steps:
+		# 		var btNode_child = BTNode.new()
+		# 		btNode_child.step = PlanStep.new()
+
+		# 		btNode_child.step.name = child.name
+		# 		btNode_child.step.copy_params(child)
+		# 		btNode_child.step.copy_params_from_parent_step(step)
+
+		# 		get_BTNode(btNode_child, btNode_child.step, player_position, possible_obj_actions)
+		# 		btNode_child.parent = btNode
+		# 		btNode.children.append(btNode_child)
+		
 		PlanStep.STEP_TYPE.CUSTOM:
-			var expansion_rule: BTInfo = BtRulesManager.get_bt_info(step.name)
-			btNode.type = expansion_rule.type
-			for child in expansion_rule.children_steps:
-				var btNode_child = BTNode.new()
-				btNode_child.step = PlanStep.new()
-
-				btNode_child.step.name = child.name
-				btNode_child.step.copy_params(child)
-				btNode_child.step.copy_params_from_parent_step(step)
-
-				get_BTNode(btNode_child, btNode_child.step, player_position, possible_obj_actions)
-				btNode_child.parent = btNode
-				btNode.children.append(btNode_child)
+			return BtRulesManager.build_bt(step)
 				
 		_:
 			btNode.type = BTInfo.BTNodeType.TASK
@@ -292,7 +297,8 @@ func update(player_position: Vector3, possible_obj_actions: Array, feedback: GLO
 				continue
 			if minutes > event.hours * 60 + event.minutes:
 				current_bt = BTNode.new()
-				get_BTNode(current_bt, event.step, player_position, possible_obj_actions)
+				#get_BTNode(current_bt, event.step, player_position, possible_obj_actions)
+				current_bt = BtRulesManager.build_bt(event.step)
 				current_event = event
 	if current_bt == null:
 		#add default 
@@ -346,7 +352,7 @@ func process_BT(bt_node: BTNode, task_feedback: GLOBAL_DEFINITIONS.AI_FEEDBACK) 
 				return ProcessReturn.BRANCH_DONE
 			return ProcessReturn.SUCCESS
 		BTInfo.BTNodeType.RETRY:
-			while current_retry_amount < bt_node.amount:
+			while current_retry_amount < bt_node.attempts:
 				current_retry_amount += 1
 				var child = bt_node.children[0]
 				var outcome = process_BT(child, task_feedback)

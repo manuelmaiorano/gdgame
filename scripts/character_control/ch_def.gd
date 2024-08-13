@@ -109,6 +109,20 @@ func _on_velocity_computed(safe_velocity: Vector3) -> void:
 
 func execute_step(step: PlanStep):
 	match step.step_type:
+		PlanStep.STEP_TYPE.AIM_AT:
+			var pos = variables_stack.pop_back()
+			agent_input.aiming = true
+			agent_input.q_to = Quaternion(Transform3D().looking_at(pos, Vector3.UP, true).basis)
+			agent_input.shoot_target = pos
+			return GLOBAL_DEFINITIONS.AI_FEEDBACK.DONE
+		
+		PlanStep.STEP_TYPE.QUERY_PERSON:
+			var ch = Characters.get_by_name(step.who)
+			if ch == null:
+				return GLOBAL_DEFINITIONS.AI_FEEDBACK.FAILED
+			variables_stack.append(ch.get(step.property_name))
+			return GLOBAL_DEFINITIONS.AI_FEEDBACK.DONE
+
 		PlanStep.STEP_TYPE.QUERY_INVENTORY:
 			for item in inventory:
 				if item.type == step.obj_type:
@@ -131,7 +145,7 @@ func execute_step(step: PlanStep):
 				if popped_variable == item:
 					equipped_item_idx = idx
 					$ControllablePlayer/UI.update_inventory(inventory, equipped_item_idx)
-					item.equip()
+					item.object.equip()
 					return GLOBAL_DEFINITIONS.AI_FEEDBACK.DONE
 			return GLOBAL_DEFINITIONS.AI_FEEDBACK.FAILED
 
@@ -185,6 +199,8 @@ func execute_step(step: PlanStep):
 					agent_input.punching = true
 				GLOBAL_DEFINITIONS.CHARACTER_ACTION.KICK:
 					agent_input.kicking = true
+				GLOBAL_DEFINITIONS.CHARACTER_ACTION.SHOOT:
+					agent_input.shooting = true
 			return GLOBAL_DEFINITIONS.AI_FEEDBACK.DONE
 		_:
 			return GLOBAL_DEFINITIONS.AI_FEEDBACK.DONE
@@ -219,6 +235,7 @@ func abort(step: PlanStep):
 			pass
 
 func update_ai(player_position: Vector3, possible_obj_actions: Array[ActionInfo]):
+	DebugView.clear_debug_info(self)
 	var should_abort = $AI.update(player_position, possible_obj_actions, step_execution_state, CurrentTimeManager.get_current_time_in_minutes())
 	var current_step: PlanStep = $AI.current_step_task
 	if current_step:
@@ -231,9 +248,9 @@ func update_ai(player_position: Vector3, possible_obj_actions: Array[ActionInfo]
 				step_execution_state = check_completion(current_step, navigation_agent.is_navigation_finished())
 		var step_type_str = PlanStep.STEP_TYPE.keys()[current_step.step_type]
 		var exec_state_str = GLOBAL_DEFINITIONS.AI_FEEDBACK.keys()[step_execution_state]
-		DebugView.print_debug_info("STEP: %s\n 	TYPE: %s\n	STATE: %s" % [current_step.name, step_type_str, exec_state_str], self)
+		DebugView.append_debug_info("STEP: %s\n 	TYPE: %s\n	STATE: %s" % [current_step.name, step_type_str, exec_state_str], self)
 	else:
-		DebugView.print_debug_info("STEP: \n 	TYPE: " , self)
+		DebugView.append_debug_info("STEP: \n 	TYPE: " , self)
 		
 	if should_abort:
 		abort(current_step)
@@ -453,6 +470,7 @@ func execute_action(action_info: ActionInfo):
 			equipped_item_idx = inventory.size()-1
 			$ControllablePlayer/UI.update_inventory(inventory, equipped_item_idx)
 			object.equip()
+			variables_stack.append(item)
 			
 			current_pistol = object
 			current_pistol.reparent($Human_rig/GeneralSkeleton/GunBone/ShootFrom)
@@ -592,3 +610,41 @@ func should_update_ai():
 		return true
 	ai_counter += 1
 	return false
+
+#
+
+enum ACTION {INTERACT}
+
+signal state_changed(me)
+
+var picked = false
+
+func interact():
+	return true
+
+func include_in_utility_search():
+	return true
+
+func get_type():
+	return GLOBAL_DEFINITIONS.OBJECTS.PERSON
+	
+func get_item_desc():
+	return "Person"
+	
+func get_possible_actions(player_id):
+	return [ACTION.INTERACT]
+	
+func get_player_action(action: ACTION):
+	match action:
+		ACTION.INTERACT: return GLOBAL_DEFINITIONS.CHARACTER_ACTION.TALK
+		
+func get_action_description(action: ACTION):
+	match action:
+		ACTION.INTERACT: return "Interact"
+
+func act(action: ACTION, player_id):
+	var outcome = true
+	match action:
+		ACTION.INTERACT: outcome = interact()
+	state_changed.emit(self)
+	return outcome

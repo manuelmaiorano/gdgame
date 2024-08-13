@@ -10,6 +10,12 @@ func register(player):
 	if player.name == player_controlled_character:
 		current_view_player_idx = players.size()
 	players.append(player)
+
+func get_by_name(name):
+	for player in players:
+		if player.name == name:
+			return player
+	return null
 	
 func _process(delta):
 	if Input.is_action_just_pressed("switch_player_view"):
