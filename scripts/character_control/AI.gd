@@ -18,7 +18,10 @@ var current_bt: BTNode
 var current_step_task: PlanStep = null
 var current_retry_amount = 0
 
+var player = null
+
 class BTNode:
+	var name: String
 	var step: PlanStep
 	var children: Array[BTNode]
 	var parent: BTNode
@@ -316,12 +319,13 @@ func update(player_position: Vector3, possible_obj_actions: Array, feedback: GLO
 
 enum ProcessReturn {BRANCH_DONE, SUCCESS, FAILURE, WAIT}
 
-func process_BT(bt_node: BTNode, task_feedback: GLOBAL_DEFINITIONS.AI_FEEDBACK) -> ProcessReturn:
+func process_BT(bt_node: BTNode, task_feedback: GLOBAL_DEFINITIONS.AI_FEEDBACK, ind_amount: int = 0) -> ProcessReturn:
 	match bt_node.type:
 		BTInfo.BTNodeType.SELECTOR:
+			DebugView.append_debug_info(" ".repeat(ind_amount) + "selector: \n", player)
 			var branches = 0
 			for child in bt_node.children:
-				var outcome = process_BT(child, task_feedback)
+				var outcome = process_BT(child, task_feedback, ind_amount +4)
 				if outcome == ProcessReturn.BRANCH_DONE:
 					branches += 1
 					continue
@@ -335,10 +339,11 @@ func process_BT(bt_node: BTNode, task_feedback: GLOBAL_DEFINITIONS.AI_FEEDBACK) 
 				return ProcessReturn.BRANCH_DONE
 			return ProcessReturn.FAILURE
 		BTInfo.BTNodeType.SEQUENCE:
+			DebugView.append_debug_info(" ".repeat(ind_amount) + "sequence: \n", player)
 			var branches = 0
 			for idx in bt_node.children.size():
 				var child = bt_node.children[idx]
-				var outcome = process_BT(child, task_feedback)
+				var outcome = process_BT(child, task_feedback, ind_amount+4)
 				if outcome == ProcessReturn.BRANCH_DONE:
 					branches += 1
 					continue
@@ -353,9 +358,9 @@ func process_BT(bt_node: BTNode, task_feedback: GLOBAL_DEFINITIONS.AI_FEEDBACK) 
 			return ProcessReturn.SUCCESS
 		BTInfo.BTNodeType.RETRY:
 			while current_retry_amount < bt_node.attempts:
-				current_retry_amount += 1
+				DebugView.append_debug_info(" ".repeat(ind_amount) + "retry(%d): \n" % current_retry_amount, player)
 				var child = bt_node.children[0]
-				var outcome = process_BT(child, task_feedback)
+				var outcome = process_BT(child, task_feedback, ind_amount+4)
 				if outcome == ProcessReturn.BRANCH_DONE:
 					current_retry_amount = 0
 					return ProcessReturn.BRANCH_DONE
@@ -363,15 +368,21 @@ func process_BT(bt_node: BTNode, task_feedback: GLOBAL_DEFINITIONS.AI_FEEDBACK) 
 					current_retry_amount = 0
 					return ProcessReturn.SUCCESS
 				if outcome == ProcessReturn.FAILURE:
+					current_retry_amount += 1
 					continue
 				if outcome == ProcessReturn.WAIT:
 					return ProcessReturn.WAIT
 			current_retry_amount = 0
 			return ProcessReturn.FAILURE
 		BTInfo.BTNodeType.TASK:
+			DebugView.append_debug_info(" ".repeat(ind_amount) + "task: %s\n" % bt_node.name, player)
+			if bt_node.step.step_type == PlanStep.STEP_TYPE.QUERY_PERSON and bt_node.step.property_name == "ragdoll":
+				pass
 			if current_step_task == null:
 				current_step_task = bt_node.step
 				return ProcessReturn.WAIT
+			if current_step_task.step_type == PlanStep.STEP_TYPE.QUERY_PERSON and current_step_task.property_name == "ragdoll":
+				pass
 			if bt_node.step == current_step_task:
 				if task_feedback == GLOBAL_DEFINITIONS.AI_FEEDBACK.FAILED:
 					current_step_task = null

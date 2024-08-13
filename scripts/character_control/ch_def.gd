@@ -94,12 +94,12 @@ func _ready():
 	
 	if not controlled_by_player:
 		$ControllablePlayer/UI.hide()
+		$AI.player = self
+		agent_input.action_id = -1
 
 	if controlled_by_player:
 		$ControllablePlayer/UI.equip.connect(_on_inventory_item_changed)
-	
-	if not controlled_by_player:
-		agent_input.action_id = -1
+
 
 
 func _on_velocity_computed(safe_velocity: Vector3) -> void:
@@ -112,7 +112,8 @@ func execute_step(step: PlanStep):
 		PlanStep.STEP_TYPE.AIM_AT:
 			var pos = variables_stack.pop_back()
 			agent_input.aiming = true
-			agent_input.q_to = Quaternion(Transform3D().looking_at(pos, Vector3.UP, true).basis)
+			var current_trans = Transform3D(transform)
+			agent_input.q_to = Quaternion(current_trans.looking_at(pos, Vector3.UP, true).basis)
 			agent_input.shoot_target = pos
 			return GLOBAL_DEFINITIONS.AI_FEEDBACK.DONE
 		
@@ -120,7 +121,10 @@ func execute_step(step: PlanStep):
 			var ch = Characters.get_by_name(step.who)
 			if ch == null:
 				return GLOBAL_DEFINITIONS.AI_FEEDBACK.FAILED
-			variables_stack.append(ch.get(step.property_name))
+			var prop = ch.get(step.property_name)
+			variables_stack.append(prop)
+			if prop is bool and prop == false:
+				return GLOBAL_DEFINITIONS.AI_FEEDBACK.FAILED
 			return GLOBAL_DEFINITIONS.AI_FEEDBACK.DONE
 
 		PlanStep.STEP_TYPE.QUERY_INVENTORY:
@@ -148,6 +152,14 @@ func execute_step(step: PlanStep):
 					item.object.equip()
 					return GLOBAL_DEFINITIONS.AI_FEEDBACK.DONE
 			return GLOBAL_DEFINITIONS.AI_FEEDBACK.FAILED
+
+		PlanStep.STEP_TYPE.UNEQUIP:
+			if equipped_item_idx != -1:
+				inventory[equipped_item_idx].object.unequip()
+				equipped_item_idx = -1
+				$ControllablePlayer/UI.update_inventory(inventory, equipped_item_idx)
+			agent_input.aiming = false
+			return GLOBAL_DEFINITIONS.AI_FEEDBACK.DONE
 
 		PlanStep.STEP_TYPE.GOTO_POSITION:
 			if step.should_run:

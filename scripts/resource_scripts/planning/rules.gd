@@ -8,6 +8,7 @@ func build_bt(step: PlanStep):
 
 func Goto() :
 	var bt_node = AI.BTNode.new()
+	bt_node.name = "Goto"
 	bt_node.type = BTInfo.BTNodeType.TASK
 	var step = PlanStep.new()
 	step.step_type = PlanStep.STEP_TYPE.GOTO_POSITION
@@ -17,6 +18,7 @@ func Goto() :
 
 func AimAt() :
 	var bt_node = AI.BTNode.new()
+	bt_node.name = "AimAt"
 	bt_node.type = BTInfo.BTNodeType.TASK
 	var step = PlanStep.new()
 	step.step_type = PlanStep.STEP_TYPE.AIM_AT
@@ -25,6 +27,7 @@ func AimAt() :
 
 func Execute() :
 	var bt_node = AI.BTNode.new()
+	bt_node.name = "ExexuteStored"
 	bt_node.type = BTInfo.BTNodeType.TASK
 	var step = PlanStep.new()
 	step.step_type = PlanStep.STEP_TYPE.EXECUTE_OBJ_ACTION_STORED
@@ -33,6 +36,7 @@ func Execute() :
 
 func ExecuteChAction(action) :
 	var bt_node = AI.BTNode.new()
+	bt_node.name = "ExexuteChAction"
 	bt_node.type = BTInfo.BTNodeType.TASK
 	var step = PlanStep.new()
 	step.step_type = PlanStep.STEP_TYPE.EXECUTE_NPC_ACTION
@@ -42,6 +46,7 @@ func ExecuteChAction(action) :
 
 func QueryInventory(type: GLOBAL_DEFINITIONS.OBJECTS = GLOBAL_DEFINITIONS.OBJECTS.NONE) :
 	var bt_node = AI.BTNode.new()
+	bt_node.name = "QueryInventory"
 	bt_node.type = BTInfo.BTNodeType.TASK
 	var step = PlanStep.new()
 	step.step_type = PlanStep.STEP_TYPE.QUERY_INVENTORY
@@ -52,6 +57,7 @@ func QueryInventory(type: GLOBAL_DEFINITIONS.OBJECTS = GLOBAL_DEFINITIONS.OBJECT
 
 func QueryPerson(name, property) :
 	var bt_node = AI.BTNode.new()
+	bt_node.name = "QueryPerson"
 	bt_node.type = BTInfo.BTNodeType.TASK
 	var step = PlanStep.new()
 	step.step_type = PlanStep.STEP_TYPE.QUERY_PERSON
@@ -62,6 +68,7 @@ func QueryPerson(name, property) :
 
 func QueryClose(type: GLOBAL_DEFINITIONS.OBJECTS = GLOBAL_DEFINITIONS.OBJECTS.NONE) :
 	var bt_node = AI.BTNode.new()
+	bt_node.name = "QueryClose"
 	bt_node.type = BTInfo.BTNodeType.TASK
 	var step = PlanStep.new()
 	step.step_type = PlanStep.STEP_TYPE.QUERY_CLOSE
@@ -71,10 +78,20 @@ func QueryClose(type: GLOBAL_DEFINITIONS.OBJECTS = GLOBAL_DEFINITIONS.OBJECTS.NO
 
 func Equip(type: GLOBAL_DEFINITIONS.OBJECTS = GLOBAL_DEFINITIONS.OBJECTS.NONE) :
 	var bt_node = AI.BTNode.new()
+	bt_node.name = "Equip"
 	bt_node.type = BTInfo.BTNodeType.TASK
 	var step = PlanStep.new()
 	step.step_type = PlanStep.STEP_TYPE.EQUIP
 	step.obj_type = type
+	bt_node.step = step
+	return bt_node
+
+func UnEquip() :
+	var bt_node = AI.BTNode.new()
+	bt_node.name = "UnEquip"
+	bt_node.type = BTInfo.BTNodeType.TASK
+	var step = PlanStep.new()
+	step.step_type = PlanStep.STEP_TYPE.UNEQUIP
 	bt_node.step = step
 	return bt_node
 
@@ -132,9 +149,10 @@ func ShootPerson(name):
 			Sequence([
 				QueryPerson(name, "global_position"),
 				AimAt(),
-				ExecuteChAction(GLOBAL_DEFINITIONS.CHARACTER_ACTION.SHOOT),
+				#ExecuteChAction(GLOBAL_DEFINITIONS.CHARACTER_ACTION.SHOOT),
 				QueryPerson(name, "ragdoll")
 				]),
-			3
-		)
+			30
+		),
+		UnEquip()
 	])
