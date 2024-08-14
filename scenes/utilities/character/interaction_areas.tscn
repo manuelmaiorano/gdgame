@@ -1,4 +1,6 @@
-[gd_scene load_steps=3 format=3 uid="uid://dtxbbw4r1c2h1"]
+[gd_scene load_steps=4 format=3 uid="uid://dtxbbw4r1c2h1"]
+
+[ext_resource type="Script" path="res://scripts/character_interactions/interactions.gd" id="1_deubh"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_rkxc8"]
 
@@ -6,9 +8,9 @@
 size = Vector3(20, 2, 20)
 
 [node name="InteractionAreas" type="Node3D"]
+script = ExtResource("1_deubh")
 
 [node name="CloseInteraction" type="Area3D" parent="."]
-collision_layer = 2
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="CloseInteraction"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.943357, 0)

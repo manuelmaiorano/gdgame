@@ -86,6 +86,8 @@ func _ready():
 	
 	close_interaction_area.body_entered.connect(_on_body_collision)
 	if controlled_by_player:
+		far_interaction_area.monitorable = false
+		far_interaction_area.monitoring = false
 		close_interaction_area.area_entered.connect(_on_interaction_entered)
 		close_interaction_area.area_exited.connect(_on_interaction_exited)
 	else:
@@ -142,6 +144,14 @@ func execute_step(step: PlanStep):
 					return GLOBAL_DEFINITIONS.AI_FEEDBACK.DONE
 			return GLOBAL_DEFINITIONS.AI_FEEDBACK.FAILED
 		
+		PlanStep.STEP_TYPE.QUERY_ACTION_UITILITY:
+			var chosen = $AI.pick_obj_action(possible_actions)
+			if chosen == null:
+				return GLOBAL_DEFINITIONS.AI_FEEDBACK.FAILED
+			variables_stack.append(chosen)
+			variables_stack.append(chosen.object.global_position)
+			return GLOBAL_DEFINITIONS.AI_FEEDBACK.DONE
+		
 		PlanStep.STEP_TYPE.EQUIP:
 			for idx in inventory.size():
 				var item = inventory[idx]
@@ -184,10 +194,11 @@ func execute_step(step: PlanStep):
 		
 		PlanStep.STEP_TYPE.EXECUTE_OBJ_ACTION_STORED:
 			action_done = false
+			popped_variable = variables_stack.pop_back()
 			for idx in possible_actions.size():
 
 				var x = possible_actions[idx]
-				popped_variable = variables_stack.pop_back()
+				
 				if x == popped_variable:
 					agent_input.action_id = idx 
 					return GLOBAL_DEFINITIONS.AI_FEEDBACK.RUNNING
@@ -533,7 +544,7 @@ func _on_actions_update(object):
 	remove_object_from_action_list(object)
 	if object.has_method("set_player"):
 		object.set_player(self)
-	for action in object.get_possible_actions(player_id):
+	for action in object.get_possible_actions(self):
 		
 		var action_info_list = ActionInfo.new()
 		action_info_list.object = object
@@ -622,41 +633,3 @@ func should_update_ai():
 		return true
 	ai_counter += 1
 	return false
-
-#
-
-enum ACTION {INTERACT}
-
-signal state_changed(me)
-
-var picked = false
-
-func interact():
-	return true
-
-func include_in_utility_search():
-	return true
-
-func get_type():
-	return GLOBAL_DEFINITIONS.OBJECTS.PERSON
-	
-func get_item_desc():
-	return "Person"
-	
-func get_possible_actions(player_id):
-	return [ACTION.INTERACT]
-	
-func get_player_action(action: ACTION):
-	match action:
-		ACTION.INTERACT: return GLOBAL_DEFINITIONS.CHARACTER_ACTION.TALK
-		
-func get_action_description(action: ACTION):
-	match action:
-		ACTION.INTERACT: return "Interact"
-
-func act(action: ACTION, player_id):
-	var outcome = true
-	match action:
-		ACTION.INTERACT: outcome = interact()
-	state_changed.emit(self)
-	return outcome

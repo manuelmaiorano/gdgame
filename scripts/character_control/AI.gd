@@ -226,25 +226,25 @@ func get_BTNode(btNode: BTNode, step: PlanStep, player_position: Vector3, possib
 					reach_step.position = step.link_end_position
 					fill_bt_node_seq(btNode, [reach_step])
 		
-		PlanStep.STEP_TYPE.SEARCH_OBJ_ACTION_UTILITY:
-			var obj_action = pick_obj_action(possible_obj_actions)
-			if obj_action != null:
+		# PlanStep.STEP_TYPE.SEARCH_OBJ_ACTION_UTILITY:
+		# 	var obj_action = pick_obj_action(possible_obj_actions)
+		# 	if obj_action != null:
 			
-				var reach_step = PlanStep.new()
-				reach_step.step_type = PlanStep.STEP_TYPE.GOTO_POSITION
-				reach_step.should_run = step.should_run
-				reach_step.position = obj_action.object.position
-				var execute_step = PlanStep.new()
-				execute_step.step_type = PlanStep.STEP_TYPE.EXECUTE_OBJ_ACTION
-				execute_step.object_id = obj_action.object.get_instance_id()
-				execute_step.object_action_id = obj_action.object_action_id
+		# 		var reach_step = PlanStep.new()
+		# 		reach_step.step_type = PlanStep.STEP_TYPE.GOTO_POSITION
+		# 		reach_step.should_run = step.should_run
+		# 		reach_step.position = obj_action.object.position
+		# 		var execute_step = PlanStep.new()
+		# 		execute_step.step_type = PlanStep.STEP_TYPE.EXECUTE_OBJ_ACTION
+		# 		execute_step.object_id = obj_action.object.get_instance_id()
+		# 		execute_step.object_action_id = obj_action.object_action_id
 
-				var object_position = obj_action.object.position
-				var distance = player_position.distance_to(object_position)
-				if distance >= GLOBAL_DEFINITIONS.MIN_DISTANCE_TO_EXECUTE_ACTION:
-					fill_bt_node_seq(btNode, [reach_step, execute_step])
-				else:
-					fill_bt_node_seq(btNode, [execute_step])
+		# 		var object_position = obj_action.object.position
+		# 		var distance = player_position.distance_to(object_position)
+		# 		if distance >= GLOBAL_DEFINITIONS.MIN_DISTANCE_TO_EXECUTE_ACTION:
+		# 			fill_bt_node_seq(btNode, [reach_step, execute_step])
+		# 		else:
+		# 			fill_bt_node_seq(btNode, [execute_step])
 		
 		# PlanStep.STEP_TYPE.SEARCH_OBJ_ACTION:
 			
@@ -305,10 +305,10 @@ func update(player_position: Vector3, possible_obj_actions: Array, feedback: GLO
 				current_event = event
 	if current_bt == null:
 		#add default 
-		current_bt = BTNode.new()
 		var step = PlanStep.new()
-		step.step_type = PlanStep.STEP_TYPE.SEARCH_OBJ_ACTION_UTILITY
-		get_BTNode(current_bt, step, player_position, possible_obj_actions)
+		step.name = "SearchObjActionUtility"
+		step.params = []
+		current_bt = BtRulesManager.build_bt(step)
 
 	if feedback != GLOBAL_DEFINITIONS.AI_FEEDBACK.RUNNING:
 		var outcome = process_BT(current_bt, feedback)

@@ -105,36 +105,48 @@ libraries = {
 [node name="map" type="Node3D" parent="."]
 
 [node name="root" type="Area3D" parent="map"]
+monitoring = false
+monitorable = false
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="map/root"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.63438, 4.62994, 1.68225)
 shape = SubResource("BoxShape3D_vaf3j")
 
 [node name="block1" type="Area3D" parent="map/root"]
+monitoring = false
+monitorable = false
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="map/root/block1"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.66407, 1.60252, -0.203964)
 shape = SubResource("BoxShape3D_ipdjk")
 
 [node name="Harris house" type="Area3D" parent="map/root/block1"]
+monitoring = false
+monitorable = false
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="map/root/block1/Harris house"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.67049, 1.60252, -0.434316)
 shape = SubResource("BoxShape3D_8e6yl")
 
 [node name="bathroom" type="Area3D" parent="map/root/block1/Harris house"]
+monitoring = false
+monitorable = false
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="map/root/block1/Harris house/bathroom"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.6446, 1.60252, 2.2643)
 shape = SubResource("BoxShape3D_ayt2t")
 
 [node name="livingroom" type="Area3D" parent="map/root/block1/Harris house"]
+monitoring = false
+monitorable = false
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="map/root/block1/Harris house/livingroom"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.6446, 1.60252, -2.44898)
 shape = SubResource("BoxShape3D_7r1u5")
 
 [node name="kitchen" type="Area3D" parent="map/root/block1/Harris house"]
+monitoring = false
+monitorable = false
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="map/root/block1/Harris house/kitchen"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.6446, 1.60252, 0.307823)
@@ -158,12 +170,16 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.513452, 0, -2.60562)
 
 [node name="block2" type="Area3D" parent="map/root"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11.3246, 0, 0)
+monitoring = false
+monitorable = false
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="map/root/block2"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.66407, 1.60252, 2.27396)
 shape = SubResource("BoxShape3D_41n03")
 
 [node name="johns house" type="Area3D" parent="map/root/block2"]
+monitoring = false
+monitorable = false
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="map/root/block2/johns house"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.95709, 0, -1.03522)
@@ -171,6 +187,8 @@ shape = SubResource("BoxShape3D_56rli")
 
 [node name="livingroom" type="Area3D" parent="map/root/block2/johns house"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.255388, 0, 0)
+monitoring = false
+monitorable = false
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="map/root/block2/johns house/livingroom"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.21762, 3, 0.162018)

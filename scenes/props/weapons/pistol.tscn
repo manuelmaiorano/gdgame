@@ -228,7 +228,6 @@ shadow_mesh = SubResource("ArrayMesh_br1nw")
 size = Vector3(0.0253906, 0.158417, 0.216064)
 
 [node name="pistol" type="RigidBody3D"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
 script = ExtResource("1_c8vye")
 
 [node name="lower" type="Node3D" parent="."]

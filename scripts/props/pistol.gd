@@ -24,7 +24,7 @@ func get_type():
 func get_item_desc():
 	return "Gun"
 	
-func get_possible_actions(player_id):
+func get_possible_actions(player):
 	if picked:
 		return []
 	return [ACTION.PICK]
@@ -37,7 +37,7 @@ func get_action_description(action: ACTION):
 	match action:
 		ACTION.PICK: return "Pick the gun"
 
-func act(action: ACTION, player_id):
+func act(action: ACTION, player):
 	var outcome = true
 	match action:
 		ACTION.PICK: outcome = pick()

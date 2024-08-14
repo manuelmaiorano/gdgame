@@ -86,6 +86,15 @@ func QueryClose(type: GLOBAL_DEFINITIONS.OBJECTS = GLOBAL_DEFINITIONS.OBJECTS.NO
 	bt_node.step = step
 	return bt_node
 
+func QueryUtility() :
+	var bt_node = AI.BTNode.new()
+	bt_node.name = "QueryUtility"
+	bt_node.type = BTInfo.BTNodeType.TASK
+	var step = PlanStep.new()
+	step.step_type = PlanStep.STEP_TYPE.QUERY_ACTION_UITILITY
+	bt_node.step = step
+	return bt_node
+
 func Equip(type: GLOBAL_DEFINITIONS.OBJECTS = GLOBAL_DEFINITIONS.OBJECTS.NONE) :
 	var bt_node = AI.BTNode.new()
 	bt_node.name = "Equip"
@@ -132,6 +141,12 @@ func Retry(btstep, amount):
 	
 	return bt_node
 
+func SearchObjActionUtility() :
+	return Sequence([
+		QueryUtility(),
+		Goto(),
+		Execute()
+	])
 
 func SearchObjAction(type: GLOBAL_DEFINITIONS.OBJECTS = GLOBAL_DEFINITIONS.OBJECTS.NONE) :
 	return Sequence([
@@ -163,7 +178,7 @@ func ShootPerson(name):
 					#ExecuteChAction(GLOBAL_DEFINITIONS.CHARACTER_ACTION.SHOOT),
 					QueryPerson(name, "ragdoll")
 					]),
-				3
+				10
 			),
 			UnEquip()
 		]),

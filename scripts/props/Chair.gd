@@ -5,7 +5,7 @@ enum ACTION {SIT, STAND}
 signal state_changed(me)
 
 var seated = false
-var current_player_id = -1
+var current_player = null
 
 func sit():
 	if seated:
@@ -18,10 +18,10 @@ func stand():
 	seated = false
 	
 
-func get_possible_actions(player_id):
-	if seated and player_id == current_player_id:
+func get_possible_actions(player):
+	if seated and player == current_player:
 		return [ACTION.STAND]
-	elif seated and not player_id == current_player_id:
+	elif seated and not player == current_player:
 		return []
 	return [ACTION.SIT]
 	
@@ -42,13 +42,13 @@ func get_action_adv(action: ACTION):
 		ACTION.STAND: adv.comfort -= 0.5
 	return adv
 		
-func act(action: ACTION, player_id):
+func act(action: ACTION, player):
 	match action:
 		ACTION.SIT: 
 			sit()
-			current_player_id = player_id
+			current_player = player
 		ACTION.STAND: 
 			stand()
-			current_player_id = -1
+			current_player = null
 		
 	state_changed.emit(self)
