@@ -34,6 +34,16 @@ func Execute() :
 	bt_node.step = step
 	return bt_node
 
+func ExecuteNearbyByType(type) :
+	var bt_node = AI.BTNode.new()
+	bt_node.name = "ExexuteStored"
+	bt_node.type = BTInfo.BTNodeType.TASK
+	var step = PlanStep.new()
+	step.step_type = PlanStep.STEP_TYPE.EXECUTE_OBJ_ACTION_BY_ACTION_TYPE
+	step.object_action_type = type
+	bt_node.step = step
+	return bt_node
+
 func ExecuteChAction(action) :
 	var bt_node = AI.BTNode.new()
 	bt_node.name = "ExexuteChAction"
@@ -143,16 +153,37 @@ func EquipObj(type):
 	])
 
 func ShootPerson(name):
-	return Sequence([
-		EquipObj(GLOBAL_DEFINITIONS.OBJECTS.PISTOL),
-		Retry(
-			Sequence([
-				QueryPerson(name, "global_position"),
-				AimAt(),
-				#ExecuteChAction(GLOBAL_DEFINITIONS.CHARACTER_ACTION.SHOOT),
-				QueryPerson(name, "ragdoll")
-				]),
-			30
-		),
+	return Selector([
+		Sequence([
+			EquipObj(GLOBAL_DEFINITIONS.OBJECTS.PISTOL),
+			Retry(
+				Sequence([
+					QueryPerson(name, "global_position"),
+					AimAt(),
+					#ExecuteChAction(GLOBAL_DEFINITIONS.CHARACTER_ACTION.SHOOT),
+					QueryPerson(name, "ragdoll")
+					]),
+				3
+			),
+			UnEquip()
+		]),
 		UnEquip()
+	])
+
+func OpenNearbyDoor():
+	return Selector([
+		ExecuteNearbyByType(Door.ACTION.OPEN),
+		Sequence([
+			ExecuteNearbyByType(Door.ACTION.UNLOCK),
+			ExecuteNearbyByType(Door.ACTION.OPEN),
+		])
+	])
+
+func CrossCrossWalk():
+	return Selector([
+		ExecuteNearbyByType(Door.ACTION.OPEN),
+		Sequence([
+			ExecuteNearbyByType(Door.ACTION.UNLOCK),
+			ExecuteNearbyByType(Door.ACTION.OPEN),
+		])
 	])
