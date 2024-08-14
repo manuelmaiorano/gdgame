@@ -152,6 +152,12 @@ func execute_step(step: PlanStep):
 			variables_stack.append(chosen.object.global_position)
 			return GLOBAL_DEFINITIONS.AI_FEEDBACK.DONE
 		
+		PlanStep.STEP_TYPE.QUERY_NAVIGATION:
+			var pl_loc_name = Locations.get_node_from_position(global_position).name
+			var nav_steps = Locations.plan_navigation_from_names(pl_loc_name, step.location.place_name)
+			$AI.nav_steps = nav_steps
+			return GLOBAL_DEFINITIONS.AI_FEEDBACK.DONE
+		
 		PlanStep.STEP_TYPE.EQUIP:
 			for idx in inventory.size():
 				var item = inventory[idx]

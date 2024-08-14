@@ -6,13 +6,14 @@ func build_bt(step: PlanStep):
 		return callable.callv(step.params) 
 	return callable.call()
 
-func Goto() :
+func Goto(should_run) :
 	var bt_node = AI.BTNode.new()
 	bt_node.name = "Goto"
 	bt_node.type = BTInfo.BTNodeType.TASK
 	var step = PlanStep.new()
 	step.step_type = PlanStep.STEP_TYPE.GOTO_POSITION
 	step.use_stored_pos = true
+	step.should_run = should_run
 	bt_node.step = step
 	return bt_node
 
@@ -95,6 +96,25 @@ func QueryUtility() :
 	bt_node.step = step
 	return bt_node
 
+func QueryNavigation(loc_name) :
+	var bt_node = AI.BTNode.new()
+	bt_node.name = "QueryNavigation"
+	bt_node.type = BTInfo.BTNodeType.TASK
+	var step = PlanStep.new()
+	step.step_type = PlanStep.STEP_TYPE.QUERY_NAVIGATION
+	step.location = LocationName.new()
+	step.location.place_name = loc_name
+	bt_node.step = step
+	return bt_node
+
+func ExecuteNavigation():
+	var bt_node = AI.BTNode.new()
+	bt_node.name = "ExecNavigation"
+	bt_node.type = BTInfo.BTNodeType.NAV
+	var step = PlanStep.new()
+	bt_node.step = step
+	return bt_node
+
 func Equip(type: GLOBAL_DEFINITIONS.OBJECTS = GLOBAL_DEFINITIONS.OBJECTS.NONE) :
 	var bt_node = AI.BTNode.new()
 	bt_node.name = "Equip"
@@ -141,17 +161,23 @@ func Retry(btstep, amount):
 	
 	return bt_node
 
-func SearchObjActionUtility() :
+func GotoLocation(location_name):
+	return Sequence([
+		QueryNavigation(location_name),
+		ExecuteNavigation()
+	])
+
+func SearchObjActionUtility(should_run) :
 	return Sequence([
 		QueryUtility(),
-		Goto(),
+		Goto(should_run),
 		Execute()
 	])
 
 func SearchObjAction(type: GLOBAL_DEFINITIONS.OBJECTS = GLOBAL_DEFINITIONS.OBJECTS.NONE) :
 	return Sequence([
 		QueryClose(type),
-		Goto(),
+		Goto(false),
 		Execute()
 	])
 

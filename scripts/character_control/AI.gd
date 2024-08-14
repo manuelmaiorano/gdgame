@@ -13,10 +13,14 @@ const MIN_DISTANCE_TO_DOOR = 0.1
 @export var room_curve: Curve
 
 @export var day_schedules: Array[DaySchedule]
-var current_event: DaySchedule
+var current_event: DaySchedule = null
+var current_event_idx: int = 0
+
+
 var current_bt: BTNode
 var current_step_task: PlanStep = null
 var current_retry_amount = 0
+var nav_steps = null
 
 var player = null
 
@@ -293,27 +297,38 @@ func update(player_position: Vector3, possible_obj_actions: Array, feedback: GLO
 	var should_abort = false
 	update_needs(state.needs, null)
 	
-	if current_bt == null:
-		#check schedule
-		for event in day_schedules:
-			if event == current_event:
-				continue
-			if minutes > event.hours * 60 + event.minutes:
-				current_bt = BTNode.new()
-				#get_BTNode(current_bt, event.step, player_position, possible_obj_actions)
-				current_bt = BtRulesManager.build_bt(event.step)
-				current_event = event
+	if current_bt == null and current_event == null:
+		if not current_event_idx == -1:
+			var next_event = day_schedules[current_event_idx]
+			if minutes > next_event.hours * 60 + next_event.minutes:
+				current_event = day_schedules[current_event_idx]
+				current_bt = BtRulesManager.build_bt(current_event.step)
+
+		# #check schedule
+		# for event in day_schedules:
+		# 	if event == current_event:
+		# 		continue
+		# 	if minutes > event.hours * 60 + event.minutes:
+		# 		current_bt = BTNode.new()
+		# 		#get_BTNode(current_bt, event.step, player_position, possible_obj_actions)
+		# 		current_bt = BtRulesManager.build_bt(event.step)
+		# 		current_event = event
 	if current_bt == null:
 		#add default 
 		var step = PlanStep.new()
 		step.name = "SearchObjActionUtility"
-		step.params = []
+		step.params = [true]
 		current_bt = BtRulesManager.build_bt(step)
 
 	if feedback != GLOBAL_DEFINITIONS.AI_FEEDBACK.RUNNING:
 		var outcome = process_BT(current_bt, feedback)
 		if outcome != ProcessReturn.WAIT:
 			current_bt = null
+			if current_event != null:
+				current_event = null
+				current_event_idx += 1
+				if current_event_idx >= day_schedules.size():
+					current_event_idx = -1
 	
 	return should_abort
 
@@ -340,6 +355,25 @@ func process_BT(bt_node: BTNode, task_feedback: GLOBAL_DEFINITIONS.AI_FEEDBACK, 
 			return ProcessReturn.FAILURE
 		BTInfo.BTNodeType.SEQUENCE:
 			DebugView.append_debug_info(" ".repeat(ind_amount) + "sequence: \n", player)
+			var branches = 0
+			for idx in bt_node.children.size():
+				var child = bt_node.children[idx]
+				var outcome = process_BT(child, task_feedback, ind_amount+4)
+				if outcome == ProcessReturn.BRANCH_DONE:
+					branches += 1
+					continue
+				if outcome == ProcessReturn.SUCCESS:
+					continue
+				if outcome == ProcessReturn.FAILURE:
+					return ProcessReturn.FAILURE
+				if outcome == ProcessReturn.WAIT:
+					return ProcessReturn.WAIT
+			if branches == bt_node.children.size():
+				return ProcessReturn.BRANCH_DONE
+			return ProcessReturn.SUCCESS
+		BTInfo.BTNodeType.NAV:
+			DebugView.append_debug_info(" ".repeat(ind_amount) + "nav: \n", player)
+			build_nav_steps(bt_node)
 			var branches = 0
 			for idx in bt_node.children.size():
 				var child = bt_node.children[idx]
@@ -395,3 +429,26 @@ func process_BT(bt_node: BTNode, task_feedback: GLOBAL_DEFINITIONS.AI_FEEDBACK, 
 
 			
 
+func build_nav_steps(bt_node):
+	bt_node.type = BTInfo.BTNodeType.SEQUENCE
+	for step in nav_steps:
+		var btNode_child = BTNode.new()
+		btNode_child.step = step
+		btNode_child.parent = bt_node
+		if step.step_type == PlanStep.STEP_TYPE.GOTO_POSITION:
+			btNode_child.type = BTInfo.BTNodeType.TASK
+		else:
+			match step.crossing_rule:
+				LocationGraphLink.CROSSING_RULE.NONE:
+					btNode_child.type = BTInfo.BTNodeType.TASK
+				LocationGraphLink.CROSSING_RULE.DOOR:
+					var door_step = PlanStep.new()
+					door_step.name = "OpenNearbyDoor"
+					door_step.params = []
+					btNode_child = BtRulesManager.build_bt(door_step)
+				LocationGraphLink.CROSSING_RULE.CROSSWALK:
+					var crosswalk_step = PlanStep.new()
+					crosswalk_step.step_type = PlanStep.STEP_TYPE.GOTO_POSITION
+					crosswalk_step.position = step.link_end_position
+					btNode_child =  crosswalk_step
+		bt_node.children.append(btNode_child)
