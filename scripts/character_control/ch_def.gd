@@ -182,9 +182,11 @@ func execute_step(step: PlanStep):
 
 		PlanStep.STEP_TYPE.GOTO_POSITION:
 			if seated:
-				animation_tree["parameters/sit/conditions/stand"] =  true
-				$CollisionShape3D.disabled = false
-				seated = false
+				for idx in possible_actions.size():
+					var x = possible_actions[idx]
+					if x.object_action_id == Chair.ACTION.STAND:
+						agent_input.action_id = idx 
+
 			if step.should_run:
 				agent_running = true
 			if step.use_stored_pos:
