@@ -10,7 +10,7 @@ const ROTATION_INTERPOLATE_SPEED = 10
 const MIN_AIRBORNE_TIME = 0.7
 const JUMP_SPEED = 5
 
-const AI_RATE = 30
+const AI_RATE = 10
 
 var ai_counter = 0
 
@@ -34,6 +34,7 @@ var motion = Vector2()
 
 @onready var fire_cooldown: Timer = $FireCoolDown
 @onready var shoot_from = $Human_rig/GeneralSkeleton/GunBone/ShootFrom
+
 @onready var sound_effects = $SoundEffects
 @onready var sound_effect_shoot = sound_effects.get_node("Shoot")
 
@@ -45,10 +46,10 @@ var motion = Vector2()
 @export var current_animation := ANIMATIONS.WALK
 @onready var inside_car = false
 @onready var ragdoll = false
-@onready var current_pistol = null
+#@onready var current_pistol = null
 @onready var current_car = null
 @onready var seated = false
-@onready var reached = false
+#@onready var reached = false
 @onready var agent_input = GLOBAL_DEFINITIONS.AgentInput.new()
 
 class ActionInfo:
@@ -62,9 +63,11 @@ class ActionInfo:
 @onready var step_execution_state = GLOBAL_DEFINITIONS.AI_FEEDBACK.DONE
 @onready var action_successful = true
 @onready var action_done = false
-@onready var variables: Dictionary = {}
+#@onready var variables: Dictionary = {}
 @onready var variables_stack = []
 @onready var popped_variable = null
+
+
 @onready var agent_running = false
 
 @onready var controlled_by_player = false
@@ -287,7 +290,7 @@ func update_ai(player_position: Vector3, possible_obj_actions: Array[ActionInfo]
 
 func set_movement_target(movement_target: Vector3):
 	navigation_agent.set_target_position(movement_target)
-	reached = false
+	#reached = false
 	
 func _physics_process(delta: float):
 	if controlled_by_player:
@@ -298,10 +301,12 @@ func _physics_process(delta: float):
 	else:
 		if should_update_ai():
 			update_ai(global_position, possible_actions)
+			if step_execution_state != GLOBAL_DEFINITIONS.AI_FEEDBACK.RUNNING:
+				update_ai(global_position, possible_actions)
 			#agent_input = $AI.get_next_actions(position, possible_actions, reached, agent_input.motion, current_car)
 		if navigation_agent.is_navigation_finished():
 			agent_input.motion = Vector2()
-			reached = true
+			#reached = true
 		else:
 			var next_path_position: Vector3 = navigation_agent.get_next_path_position()
 			var vector_to: Vector3 = global_position.direction_to(next_path_position).normalized()
@@ -355,15 +360,12 @@ func apply_input(delta: float):
 	camera_x.y = 0
 	camera_x = camera_x.normalized()
 	
+	#car control
 	if current_car:
 		var target = camera_x * motion.x + camera_z * motion.y if controlled_by_player else Vector3(motion.x, 0, motion.y)
 		current_car.set_motion(motion)
 		global_position = current_car.global_position
 		return
-	
-	# pistol hide
-	# if not agent_input.aiming and current_pistol:
-	# 	current_pistol.hide()
 
 	# Jump/in-air logic.
 	airborne_time += delta
@@ -501,9 +503,9 @@ func execute_action(action_info: ActionInfo):
 			object.equip()
 			variables_stack.append(item)
 			
-			current_pistol = object
-			current_pistol.reparent($Human_rig/GeneralSkeleton/GunBone/ShootFrom)
-			current_pistol.transform = Transform3D(Basis.from_euler(Vector3(-1.57, -1.57 , 0)), Vector3(0, 0, 0))
+			# current_pistol = object
+			# current_pistol.reparent($Human_rig/GeneralSkeleton/GunBone/ShootFrom)
+			# current_pistol.transform = Transform3D(Basis.from_euler(Vector3(-1.57, -1.57 , 0)), Vector3(0, 0, 0))
 		GLOBAL_DEFINITIONS.CHARACTER_ACTION.THROW: 
 			animation_tree["parameters/state/transition_request"] = "throw"
 		GLOBAL_DEFINITIONS.CHARACTER_ACTION.SIT: 
