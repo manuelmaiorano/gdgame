@@ -1,6 +1,9 @@
-[gd_scene load_steps=2 format=3 uid="uid://bpyqiq17rrev4"]
+[gd_scene load_steps=3 format=3 uid="uid://bpyqiq17rrev4"]
 
 [ext_resource type="Script" path="res://scripts/debug_manager.gd" id="1_qfnhl"]
+
+[sub_resource type="LabelSettings" id="LabelSettings_e6fep"]
+font_color = Color(0, 0, 0, 1)
 
 [node name="DebugView" type="Control"]
 layout_mode = 3
@@ -13,3 +16,4 @@ script = ExtResource("1_qfnhl")
 layout_mode = 0
 offset_right = 40.0
 offset_bottom = 23.0
+label_settings = SubResource("LabelSettings_e6fep")
