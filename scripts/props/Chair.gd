@@ -5,17 +5,27 @@ enum ACTION {SIT, STAND}
 signal state_changed(me)
 
 var seated = false
-var current_player = null
+@onready var current_player = null
 
-func sit():
-	if seated:
-		return
-	seated = true
+func _ready():
+	pass
 	
-func stand():
+func include_in_utility_search():
+	return true
+	
+func sit(player):
+	current_player = player
+	if seated:
+		return false
+	seated = true
+	return true
+	
+func stand(player):
+	current_player = null
 	if not seated:
-		return
+		return false
 	seated = false
+	return true
 	
 
 func get_possible_actions(player):
@@ -39,16 +49,15 @@ func get_action_adv(action: ACTION):
 	var adv = GLOBAL_DEFINITIONS.ObjectAdvertisement.new()
 	match action:
 		ACTION.SIT: adv.comfort += 0.5
-		ACTION.STAND: adv.comfort -= 0.5
 	return adv
 		
 func act(action: ACTION, player):
+	var res = true
 	match action:
 		ACTION.SIT: 
-			sit()
-			current_player = player
+			res =  sit(player)
 		ACTION.STAND: 
-			stand()
-			current_player = null
+			res = stand(player)
 		
 	state_changed.emit(self)
+	return res

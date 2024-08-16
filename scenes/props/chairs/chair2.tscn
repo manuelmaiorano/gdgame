@@ -1,0 +1,31 @@
+[gd_scene load_steps=5 format=3 uid="uid://c2hbtdhlj2brk"]
+
+[ext_resource type="PackedScene" uid="uid://b5yqfu8as02nh" path="res://assets/props/chairs/chair2/chair1.glb" id="1_ulato"]
+[ext_resource type="Script" path="res://scripts/props/Chair.gd" id="2_elqxp"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_olf46"]
+size = Vector3(0.469284, 1, 0.88501)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_pcjm7"]
+size = Vector3(0.497318, 1.10207, 0.584808)
+
+[node name="chair2" instance=ExtResource("1_ulato")]
+script = ExtResource("2_elqxp")
+
+[node name="chair6" parent="." index="0"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+
+[node name="Area3D" type="Area3D" parent="." index="1"]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Area3D" index="0"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.208809, 0.710571, 0.262085)
+shape = SubResource("BoxShape3D_olf46")
+
+[node name="SitPosition" type="Node3D" parent="." index="2"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.211606, 0, 0.838452)
+
+[node name="StaticBody3D" type="StaticBody3D" parent="." index="3"]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="StaticBody3D" index="0"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.211401, 0.540627, 0.237564)
+shape = SubResource("BoxShape3D_pcjm7")

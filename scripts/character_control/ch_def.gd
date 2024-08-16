@@ -181,6 +181,10 @@ func execute_step(step: PlanStep):
 			return GLOBAL_DEFINITIONS.AI_FEEDBACK.DONE
 
 		PlanStep.STEP_TYPE.GOTO_POSITION:
+			if seated:
+				animation_tree["parameters/sit/conditions/stand"] =  true
+				$CollisionShape3D.disabled = false
+				seated = false
 			if step.should_run:
 				agent_running = true
 			if step.use_stored_pos:
@@ -484,7 +488,7 @@ func _process(delta):
 		
 func execute_action(action_info: ActionInfo):
 	var object = action_info.object
-	var is_successful = object.act(action_info.object_action_id, player_id)
+	var is_successful = object.act(action_info.object_action_id, self)
 	if  not is_successful:
 		return false
 	if not controlled_by_player and object.include_in_utility_search():
@@ -550,8 +554,7 @@ func update_action_labels_list():
 	
 func _on_actions_update(object):
 	remove_object_from_action_list(object)
-	if object.has_method("set_player"):
-		object.set_player(self)
+	
 	for action in object.get_possible_actions(self):
 		
 		var action_info_list = ActionInfo.new()

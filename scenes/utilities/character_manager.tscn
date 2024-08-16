@@ -5,4 +5,4 @@
 [node name="CharacterManager" type="Node"]
 script = ExtResource("1_hhslw")
 player_controlled_character = "ch_def1"
-player_view_character = "ch_male"
+player_view_character = "ch_def1"
