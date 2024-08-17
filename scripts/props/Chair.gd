@@ -61,3 +61,7 @@ func act(action: ACTION, player):
 		
 	state_changed.emit(self)
 	return res
+	
+
+func get_type():
+	return GLOBAL_DEFINITIONS.OBJECTS.CHAIR
