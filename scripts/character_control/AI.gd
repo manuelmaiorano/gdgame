@@ -317,7 +317,7 @@ func update(player_position: Vector3, possible_obj_actions: Array, feedback: GLO
 		#add default 
 		var step = PlanStep.new()
 		step.name = "SearchObjActionUtility"
-		step.params = [true]
+		step.params = [false]
 		current_bt = BtRulesManager.build_bt(step)
 
 	if feedback != GLOBAL_DEFINITIONS.AI_FEEDBACK.RUNNING:
