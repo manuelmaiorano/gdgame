@@ -299,25 +299,8 @@ func set_movement_target(movement_target: Vector3):
 	#reached = false
 	
 func _physics_process(delta: float):
-	if controlled_by_player:
-		if multiplayer.is_server():
-			apply_input(delta)
-		else:
-			animate(current_animation, delta)
-	else:
-		if should_update_ai():
-			update_ai(global_position, possible_actions)
-			if step_execution_state != GLOBAL_DEFINITIONS.AI_FEEDBACK.RUNNING:
-				update_ai(global_position, possible_actions)
-			#agent_input = $AI.get_next_actions(position, possible_actions, reached, agent_input.motion, current_car)
-		if navigation_agent.is_navigation_finished():
-			agent_input.motion = Vector2()
-			#reached = true
-		else:
-			var next_path_position: Vector3 = navigation_agent.get_next_path_position()
-			var vector_to: Vector3 = global_position.direction_to(next_path_position).normalized()
-			agent_input.motion = Vector2(vector_to.x, vector_to.z)
-		apply_input(delta)
+	pass
+
 
 func animate(anim: int, delta:=0.0):
 	current_animation = anim
@@ -450,6 +433,7 @@ func apply_input(delta: float):
 
 	root_motion = Transform3D(animation_tree.get_root_motion_rotation(), animation_tree.get_root_motion_position())
 	
+	#fix sliding when idle
 	if not (motion.length() < 0.001 and animation_tree["parameters/state/current_state"] == "walk"):# or seated:#to fix
 		orientation *= root_motion
 	
@@ -464,7 +448,10 @@ func apply_input(delta: float):
 			velocity += gravity * delta
 		if on_air:
 			velocity += gravity * delta
-	
+			
+	#DebugView.print_debug_info("velocity: %s" % DebugView.format_vector3(velocity), self)
+	#DebugView.append_debug_info("\nrootpos: %s" % DebugView.format_vector3(animation_tree.get_root_motion_position()), self)
+	#DebugView.append_debug_info("\n delta: %f" % delta, self)
 	set_velocity(velocity)
 	set_up_direction(Vector3.UP)
 	move_and_slide()
@@ -481,13 +468,32 @@ func apply_input(delta: float):
 	
 func _process(delta):
 	if controlled_by_player:
+		if multiplayer.is_server():
+			apply_input(delta)
+		else:
+			animate(current_animation, delta)
+	else:
+		if should_update_ai():
+			update_ai(global_position, possible_actions)
+			if step_execution_state != GLOBAL_DEFINITIONS.AI_FEEDBACK.RUNNING:
+				update_ai(global_position, possible_actions)
+			#agent_input = $AI.get_next_actions(position, possible_actions, reached, agent_input.motion, current_car)
+		if navigation_agent.is_navigation_finished():
+			agent_input.motion = Vector2()
+			#reached = true
+		else:
+			var next_path_position: Vector3 = navigation_agent.get_next_path_position()
+			var vector_to: Vector3 = global_position.direction_to(next_path_position).normalized()
+			agent_input.motion = Vector2(vector_to.x, vector_to.z)
+		apply_input(delta)
+	if controlled_by_player:
 		agent_input.action_id -= 1
 	if agent_input.action_id >= 0:
 		#do_action_by_number(agent_input.action_id)
 		action_successful = do_action_by_number_list(agent_input.action_id)
 		agent_input.action_id = -1
 		action_done = true
-		
+			
 func execute_action(action_info: ActionInfo):
 	var object = action_info.object
 	var is_successful = object.act(action_info.object_action_id, self)
@@ -515,13 +521,14 @@ func execute_action(action_info: ActionInfo):
 		GLOBAL_DEFINITIONS.CHARACTER_ACTION.THROW: 
 			animation_tree["parameters/state/transition_request"] = "throw"
 		GLOBAL_DEFINITIONS.CHARACTER_ACTION.SIT: 
+			#TODO: when runnning start pos different
 			animation_tree["parameters/state/transition_request"] = "sit"
 			animation_tree["parameters/sit/conditions/stand"] =  false
 			var sit_position: Transform3D = object.get_node("SitPosition").global_transform
 			global_position.x = sit_position.origin.x
 			global_position.z = sit_position.origin.z
 			orientation.basis = sit_position.basis
-			$CollisionShape3D.disabled = true
+			#$CollisionShape3D.disabled = true
 			seated = true
 		GLOBAL_DEFINITIONS.CHARACTER_ACTION.STAND: 
 			animation_tree["parameters/sit/conditions/stand"] =  true
