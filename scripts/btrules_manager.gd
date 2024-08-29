@@ -2,7 +2,7 @@ class_name BTManager
 extends Node
 
 @export var rules: Array[BTInfo]
-var script_rules
+var script_rules: RULES
 
 var name2rule = {}
 

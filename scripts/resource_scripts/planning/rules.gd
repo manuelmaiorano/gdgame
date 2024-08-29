@@ -201,10 +201,10 @@ func ShootPerson(name):
 				Sequence([
 					QueryPerson(name, "global_position"),
 					AimAt(),
-					#ExecuteChAction(GLOBAL_DEFINITIONS.CHARACTER_ACTION.SHOOT),
+					ExecuteChAction(GLOBAL_DEFINITIONS.CHARACTER_ACTION.SHOOT),
 					QueryPerson(name, "ragdoll")
 					]),
-				10
+				30
 			),
 			UnEquip()
 		]),

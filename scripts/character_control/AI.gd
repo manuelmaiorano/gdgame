@@ -151,146 +151,15 @@ func pick_obj_action(possible_actions: Array):
 
 	return possible_actions[chosen.idx]
 	
-# func transform_plan_step(step: PlanStep, player_position: Vector3, possible_obj_actions: Array) -> Array[PlanStep]:
-# 	var steps = []
-# 	match step.step_type:
-# 		PlanStep.STEP_TYPE.GOTO_LOCATION:
-# 			var pl_loc_name = Locations.get_node_from_position(player_position).name
-# 			var nav_steps = Locations.plan_navigation_from_names(pl_loc_name, step.location.place_name)
-# 			steps.append_array(nav_steps)
-		
-# 		PlanStep.STEP_TYPE.EXECUTE_LINK_ACTION:
-# 			match step.crossing_rule:
-# 				LocationGraphLink.CROSSING_RULE.NONE:
-# 					steps.append(step)
-# 				LocationGraphLink.CROSSING_RULE.DOOR:
-# 					var execute_step = PlanStep.new()
-# 					execute_step.step_type = PlanStep.STEP_TYPE.EXECUTE_OBJ_ACTION_BY_ACTION_ID
-# 					execute_step.object_action_id = Door.ACTION.OPEN
-# 					steps = [execute_step]
-# 				LocationGraphLink.CROSSING_RULE.CROSSWALK:
-# 					var reach_step = PlanStep.new()
-# 					reach_step.step_type = PlanStep.STEP_TYPE.GOTO_POSITION
-# 					reach_step.position = step.link_end_position
-# 					steps = [reach_step]
-		
-# 		PlanStep.STEP_TYPE.SEARCH_OBJ_ACTION:
-# 			var obj_action = pick_obj_action(possible_obj_actions)
-			
-# 			var reach_step = PlanStep.new()
-# 			reach_step.step_type = PlanStep.STEP_TYPE.GOTO_POSITION
-# 			reach_step.position = obj_action.object.position
-# 			var execute_step = PlanStep.new()
-# 			execute_step.step_type = PlanStep.STEP_TYPE.EXECUTE_OBJ_ACTION
-# 			execute_step.object_action_id = obj_action.get_instance_id()
-# 			steps = [reach_step, execute_step]
 
-# 			var object_position = obj_action.object.position
-# 			var distance = player_position.distance_to(object_position)
-# 			if distance >= GLOBAL_DEFINITIONS.MIN_DISTANCE_TO_EXECUTE_ACTION:
-# 				steps = [reach_step, execute_step]
-# 			else:
-# 				steps = [execute_step]
-# 		_:
-# 			steps.append(step)
-
-
-# 	return steps
-
-func fill_bt_node_seq(bt_node: BTNode, children_steps: Array[PlanStep]):
-	bt_node.type = BTInfo.BTNodeType.SEQUENCE
-	for step in children_steps:
-		var btNode_child = BTNode.new()
-		btNode_child.step = step
-		btNode_child.parent = bt_node
-		btNode_child.type = BTInfo.BTNodeType.TASK
-		bt_node.children.append(btNode_child)
-
-func get_BTNode(btNode: BTNode, step: PlanStep, player_position: Vector3, possible_obj_actions: Array):
-	btNode.step = step
-	btNode.type = BTInfo.BTNodeType.TASK
-	btNode.children = []
-	match step.step_type:
-		PlanStep.STEP_TYPE.GOTO_LOCATION:
-			var pl_loc_name = Locations.get_node_from_position(player_position).name
-			var nav_steps = Locations.plan_navigation_from_names(pl_loc_name, step.location.place_name)
-			fill_bt_node_seq(btNode, nav_steps)
-		PlanStep.STEP_TYPE.EXECUTE_LINK_ACTION:
-			match step.crossing_rule:
-				LocationGraphLink.CROSSING_RULE.NONE:
-					btNode.type = BTInfo.BTNodeType.TASK
-				LocationGraphLink.CROSSING_RULE.DOOR:
-					var execute_step = PlanStep.new()
-					execute_step.step_type = PlanStep.STEP_TYPE.EXECUTE_OBJ_ACTION_BY_ACTION_TYPE
-					execute_step.object_action_type = Door.ACTION.OPEN
-					fill_bt_node_seq(btNode, [execute_step])
-				LocationGraphLink.CROSSING_RULE.CROSSWALK:
-					var reach_step = PlanStep.new()
-					reach_step.step_type = PlanStep.STEP_TYPE.GOTO_POSITION
-					reach_step.position = step.link_end_position
-					fill_bt_node_seq(btNode, [reach_step])
-		
-		# PlanStep.STEP_TYPE.SEARCH_OBJ_ACTION_UTILITY:
-		# 	var obj_action = pick_obj_action(possible_obj_actions)
-		# 	if obj_action != null:
-			
-		# 		var reach_step = PlanStep.new()
-		# 		reach_step.step_type = PlanStep.STEP_TYPE.GOTO_POSITION
-		# 		reach_step.should_run = step.should_run
-		# 		reach_step.position = obj_action.object.position
-		# 		var execute_step = PlanStep.new()
-		# 		execute_step.step_type = PlanStep.STEP_TYPE.EXECUTE_OBJ_ACTION
-		# 		execute_step.object_id = obj_action.object.get_instance_id()
-		# 		execute_step.object_action_id = obj_action.object_action_id
-
-		# 		var object_position = obj_action.object.position
-		# 		var distance = player_position.distance_to(object_position)
-		# 		if distance >= GLOBAL_DEFINITIONS.MIN_DISTANCE_TO_EXECUTE_ACTION:
-		# 			fill_bt_node_seq(btNode, [reach_step, execute_step])
-		# 		else:
-		# 			fill_bt_node_seq(btNode, [execute_step])
-		
-		# PlanStep.STEP_TYPE.SEARCH_OBJ_ACTION:
-			
-		# 	var query_step = PlanStep.new()
-		# 	query_step.step_type = PlanStep.STEP_TYPE.QUERY_CLOSE
-		# 	query_step.obj_type = step.obj_type
-		# 	query_step.object_action_type = step.object_action_type
-		# 	query_step.return_var_name = "obj"
-
-		# 	var reach_step = PlanStep.new()
-		# 	reach_step.step_type = PlanStep.STEP_TYPE.GOTO_POSITION
-		# 	reach_step.should_run = step.should_run
-		# 	reach_step.use_stored_pos = true
-			
-		# 	var execute_step = PlanStep.new()
-		# 	execute_step.step_type = PlanStep.STEP_TYPE.EXECUTE_OBJ_ACTION_STORED
-		# 	execute_step.input_var_name = "obj"
-			
-		# 	fill_bt_node_seq(btNode, [query_step, reach_step, execute_step])
-
-		# PlanStep.STEP_TYPE.CUSTOM:
-		# 	var expansion_rule: BTInfo = BtRulesManager.get_bt_info(step.name)
-		# 	btNode.type = expansion_rule.type
-		# 	for child in expansion_rule.children_steps:
-		# 		var btNode_child = BTNode.new()
-		# 		btNode_child.step = PlanStep.new()
-
-		# 		btNode_child.step.name = child.name
-		# 		btNode_child.step.copy_params(child)
-		# 		btNode_child.step.copy_params_from_parent_step(step)
-
-		# 		get_BTNode(btNode_child, btNode_child.step, player_position, possible_obj_actions)
-		# 		btNode_child.parent = btNode
-		# 		btNode.children.append(btNode_child)
-		
-		PlanStep.STEP_TYPE.CUSTOM:
-			return BtRulesManager.build_bt(step)
-				
-		_:
-			btNode.type = BTInfo.BTNodeType.TASK
-
-
+# func fill_bt_node_seq(bt_node: BTNode, children_steps: Array[PlanStep]):
+# 	bt_node.type = BTInfo.BTNodeType.SEQUENCE
+# 	for step in children_steps:
+# 		var btNode_child = BTNode.new()
+# 		btNode_child.step = step
+# 		btNode_child.parent = bt_node
+# 		btNode_child.type = BTInfo.BTNodeType.TASK
+# 		bt_node.children.append(btNode_child)
 
 
 func update(player_position: Vector3, possible_obj_actions: Array, feedback: GLOBAL_DEFINITIONS.AI_FEEDBACK, minutes: int):
@@ -427,7 +296,49 @@ func process_BT(bt_node: BTNode, task_feedback: GLOBAL_DEFINITIONS.AI_FEEDBACK, 
 			return ProcessReturn.BRANCH_DONE
 		_: return ProcessReturn.BRANCH_DONE 
 
-			
+
+var btstack: Array[BTNode] = []
+var curr_idx = 0
+
+func process_BT_stack(bt_node: BTNode, task_feedback: GLOBAL_DEFINITIONS.AI_FEEDBACK, ind_amount: int = 0):
+	btstack.append(bt_node)
+	btstack.pop_back()
+	while true:
+		var node: BTNode = btstack.back()
+		match node.type:
+			BTInfo.BTNodeType.SELECTOR:
+				DebugView.append_debug_info(" ".repeat(ind_amount) + "selector: \n", player)
+				if curr_idx == 0:
+					btstack.append(node.children[0])
+					continue
+				if curr_idx == node.children.size()-1:
+					btstack.pop_back()
+					curr_idx = 0
+					continue
+				if task_feedback == GLOBAL_DEFINITIONS.AI_FEEDBACK.FAILED:
+					btstack.pop_back()
+					continue
+				if task_feedback == GLOBAL_DEFINITIONS.AI_FEEDBACK.DONE:
+					curr_idx += 1
+					btstack.append(node.children[curr_idx])
+					continue
+
+			BTInfo.BTNodeType.SEQUENCE:
+				DebugView.append_debug_info(" ".repeat(ind_amount) + "sequence: \n", player)
+				
+			BTInfo.BTNodeType.NAV:
+				DebugView.append_debug_info(" ".repeat(ind_amount) + "nav: \n", player)
+				build_nav_steps(bt_node)
+				
+			BTInfo.BTNodeType.RETRY:
+				pass
+			BTInfo.BTNodeType.TASK:
+				current_step_task = btstack.back().step
+				DebugView.append_debug_info(" ".repeat(ind_amount) + "task: %s\n" % bt_node.name, player)
+				
+				
+				
+
 
 func build_nav_steps(bt_node):
 	bt_node.type = BTInfo.BTNodeType.SEQUENCE
