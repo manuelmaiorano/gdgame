@@ -1,0 +1,47 @@
+[gd_scene load_steps=7 format=3 uid="uid://dxiyt34igpeht"]
+
+[ext_resource type="PackedScene" uid="uid://cejtw1xpmyv1s" path="res://assets/props/doors/door1/door1.glb" id="1_s07sk"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_bj2j8"]
+size = Vector3(0.134277, 0.101868, 1.12305)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_octlj"]
+size = Vector3(0.127197, 2.17804, 0.0883942)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_35ido"]
+size = Vector3(0.107056, 2.12793, 0.0896606)
+
+[sub_resource type="ConvexPolygonShape3D" id="ConvexPolygonShape3D_aivah"]
+points = PackedVector3Array(-5.26756e-06, 1.98132, 0, -5.26756e-06, 1.98132, -0.853879, -0.063818, 1.98132, 0, -5.26756e-06, 0, 0, 0.061117, 0.990078, -0.813341, -0.063818, 1.98132, -0.853879, 0.0599919, 0.99512, -0.822118, 0.0599919, 0.990078, -0.823455, 0.0568856, 0.990078, -0.833401, 0.0523975, 0.990078, -0.839419, -5.26756e-06, 0, -0.853879, -0.063818, 0, 0, 0.0599919, 0.985035, -0.822118, -0.063818, 0, -0.853879)
+
+[sub_resource type="BoxMesh" id="BoxMesh_ltyi6"]
+size = Vector3(0.145, 2.185, 1.065)
+
+[node name="door1" instance=ExtResource("1_s07sk")]
+
+[node name="doorframe" parent="." index="0"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+
+[node name="StaticBody3D" type="StaticBody3D" parent="doorframe" index="0"]
+
+[node name="@CollisionShape3D@25186" type="CollisionShape3D" parent="doorframe/StaticBody3D" index="0"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.0334473, 2.10629, 0.567383)
+shape = SubResource("BoxShape3D_bj2j8")
+
+[node name="@CollisionShape3D@25185" type="CollisionShape3D" parent="doorframe/StaticBody3D" index="1"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.036499, 1.04703, 0.0320816)
+shape = SubResource("BoxShape3D_octlj")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="doorframe/StaticBody3D" index="2"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.038147, 1.08447, 1.08554)
+shape = SubResource("BoxShape3D_35ido")
+
+[node name="StaticBody3D" type="StaticBody3D" parent="doorframe/door" index="0"]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="doorframe/door/StaticBody3D" index="0"]
+shape = SubResource("ConvexPolygonShape3D_aivah")
+
+[node name="boolean" type="MeshInstance3D" parent="." index="1"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.0246322, 1.04178, 0.555886)
+visible = false
+mesh = SubResource("BoxMesh_ltyi6")

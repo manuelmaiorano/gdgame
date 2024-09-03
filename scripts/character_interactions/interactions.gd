@@ -4,6 +4,7 @@ class_name Person
 enum ACTION {INTERACT}
 
 signal state_changed(me)
+signal character_event_broadcast(me, event: String)
 
 @onready var character = self.get_parent()
 
@@ -44,3 +45,6 @@ func act(action: ACTION, player_id):
 		ACTION.INTERACT: outcome = interact()
 	state_changed.emit(self)
 	return outcome
+
+func broadcast(event):
+	character_event_broadcast.emit(character, event)

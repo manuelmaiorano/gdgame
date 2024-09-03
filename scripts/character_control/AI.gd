@@ -13,6 +13,8 @@ const MIN_DISTANCE_TO_DOOR = 0.1
 @export var room_curve: Curve
 
 @export var day_schedules: Array[DaySchedule]
+@export var agent_kb: KnowledgeBase
+
 var current_event: DaySchedule = null
 var current_event_idx: int = 0
 
@@ -77,9 +79,6 @@ class NpcPersonality:
 	
 class NpcRelationships:
 	var relation_scores: Array[float]
-
-class NpcKB:
-	var house_name: String
 	
 
 class NpcState:
@@ -162,7 +161,7 @@ func pick_obj_action(possible_actions: Array):
 # 		bt_node.children.append(btNode_child)
 
 
-func update(player_position: Vector3, possible_obj_actions: Array, feedback: GLOBAL_DEFINITIONS.AI_FEEDBACK, minutes: int):
+func update(player_position: Vector3, possible_obj_actions: Array, perceptions: Array[CHARACTER_CONTROLLER.Perception], feedback: GLOBAL_DEFINITIONS.AI_FEEDBACK, minutes: int):
 	var should_abort = false
 	update_needs(state.needs, null)
 	
@@ -199,6 +198,9 @@ func update(player_position: Vector3, possible_obj_actions: Array, feedback: GLO
 				if current_event_idx >= day_schedules.size():
 					current_event_idx = -1
 	
+	for perception in perceptions:
+		pass
+		#current_bt = IntManager.build_bt(perception, player)
 	return should_abort
 
 enum ProcessReturn {BRANCH_DONE, SUCCESS, FAILURE, WAIT}
@@ -328,7 +330,7 @@ func process_BT_stack(bt_node: BTNode, task_feedback: GLOBAL_DEFINITIONS.AI_FEED
 				
 			BTInfo.BTNodeType.NAV:
 				DebugView.append_debug_info(" ".repeat(ind_amount) + "nav: \n", player)
-				build_nav_steps(bt_node)
+				#build_nav_steps(bt_node, node.step.should_run)
 				
 			BTInfo.BTNodeType.RETRY:
 				pass
@@ -348,6 +350,7 @@ func build_nav_steps(bt_node):
 		btNode_child.parent = bt_node
 		if step.step_type == PlanStep.STEP_TYPE.GOTO_POSITION:
 			btNode_child.type = BTInfo.BTNodeType.TASK
+			btNode_child.step.should_run = bt_node.step.should_run
 		else:
 			match step.crossing_rule:
 				LocationGraphLink.CROSSING_RULE.NONE:

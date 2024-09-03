@@ -1,4 +1,5 @@
 extends CharacterBody3D
+class_name CHARACTER_CONTROLLER
 
 enum ANIMATIONS {JUMP_UP, JUMP_DOWN, STRAFE, WALK}
 enum CHARACTER_ACTION {SIT, THROW, OPEN, PICK}
@@ -25,15 +26,16 @@ var motion = Vector2()
 
 @onready var player_input = $ControllablePlayer/InputSynchronizer
 @onready var animation_tree = $AnimationManager/AnimationTree
-@onready var player_model = $Human_rig
+@onready var player_model = $GeneralSkeleton
 @onready var action_label = $ControllablePlayer/UI/Actions/RichTextLabel
 @onready var close_interaction_area = $InteractionAreas/CloseInteraction
 @onready var far_interaction_area = $InteractionAreas/FarInteraction
 @onready var navigation_agent: NavigationAgent3D = $NavigationAgent3D
+@onready var ai: AI = $AI
 
 
 @onready var fire_cooldown: Timer = $FireCoolDown
-@onready var shoot_from = $Human_rig/GeneralSkeleton/GunBone/ShootFrom
+@onready var shoot_from = $GeneralSkeleton/GunBone/ShootFrom
 
 @onready var sound_effects = $SoundEffects
 @onready var sound_effect_shoot = sound_effects.get_node("Shoot")
@@ -48,7 +50,7 @@ var motion = Vector2()
 @onready var ragdoll = false
 #@onready var current_pistol = null
 @onready var current_car = null
-@onready var seated = false
+#@onready var seated = false
 #@onready var reached = false
 @onready var agent_input = GLOBAL_DEFINITIONS.AgentInput.new()
 
@@ -57,8 +59,14 @@ class ActionInfo:
 	var object_action_id
 	var player_action_id
 	var desc
+
+class Perception:
+	var event: String
+	var character
+	var victim
 	
 @onready var possible_actions: Array[ActionInfo] = []
+@onready var perceptions: Array[Perception] = []
 
 @onready var step_execution_state = GLOBAL_DEFINITIONS.AI_FEEDBACK.DONE
 @onready var action_successful = true
@@ -104,8 +112,11 @@ func _ready():
 
 	if controlled_by_player:
 		$ControllablePlayer/UI.equip.connect(_on_inventory_item_changed)
+	
+	$AnimationManager/AnimationTree.animation_finished.connect(_animation_finished)
 
-
+func _animation_finished(name):
+	action_done = true
 
 func _on_velocity_computed(safe_velocity: Vector3) -> void:
 	pass
@@ -156,8 +167,11 @@ func execute_step(step: PlanStep):
 			return GLOBAL_DEFINITIONS.AI_FEEDBACK.DONE
 		
 		PlanStep.STEP_TYPE.QUERY_NAVIGATION:
+			var location_name = step.location.place_name
+			if location_name == "home":
+				location_name = ai.agent_kb.house_name
 			var pl_loc_name = Locations.get_node_from_position(global_position).name
-			var nav_steps = Locations.plan_navigation_from_names(pl_loc_name, step.location.place_name)
+			var nav_steps = Locations.plan_navigation_from_names(pl_loc_name, location_name)
 			$AI.nav_steps = nav_steps
 			return GLOBAL_DEFINITIONS.AI_FEEDBACK.DONE
 		
@@ -181,7 +195,8 @@ func execute_step(step: PlanStep):
 			return GLOBAL_DEFINITIONS.AI_FEEDBACK.DONE
 
 		PlanStep.STEP_TYPE.GOTO_POSITION:
-			if seated:
+			if animation_tree["parameters/StateMachine/playback"].get_current_node() == "execute_action"\
+			 and animation_tree["parameters/StateMachine/execute_action/Transition/current_state"] == "sit":
 				for idx in possible_actions.size():
 					var x = possible_actions[idx]
 					if x.object_action_id == Chair.ACTION.STAND:
@@ -240,6 +255,9 @@ func execute_step(step: PlanStep):
 				GLOBAL_DEFINITIONS.CHARACTER_ACTION.SHOOT:
 					agent_input.shooting = true
 			return GLOBAL_DEFINITIONS.AI_FEEDBACK.DONE
+		PlanStep.STEP_TYPE.BROADCAST:
+			$InteractionAreas.broadcast(step.who)
+			return GLOBAL_DEFINITIONS.AI_FEEDBACK.DONE
 		_:
 			return GLOBAL_DEFINITIONS.AI_FEEDBACK.DONE
 
@@ -274,7 +292,8 @@ func abort(step: PlanStep):
 
 func update_ai(player_position: Vector3, possible_obj_actions: Array[ActionInfo]):
 	DebugView.clear_debug_info(self)
-	var should_abort = $AI.update(player_position, possible_obj_actions, step_execution_state, CurrentTimeManager.get_current_time_in_minutes())
+	var should_abort = $AI.update(player_position, possible_obj_actions, perceptions, step_execution_state, CurrentTimeManager.get_current_time_in_minutes())
+	perceptions.clear()
 	var current_step: PlanStep = $AI.current_step_task
 	if current_step:
 		match step_execution_state:
@@ -302,38 +321,9 @@ func _physics_process(delta: float):
 	pass
 
 
-func animate(anim: int, delta:=0.0):
-	current_animation = anim
-
-	if anim == ANIMATIONS.JUMP_DOWN:
-		animation_tree["parameters/state/transition_request"] = "fall"
-	elif anim == ANIMATIONS.STRAFE:
-		animation_tree["parameters/state/transition_request"] = "strafe"
-		# Change aim according to camera rotation.
-		#animation_tree["parameters/aim/add_amount"] = player_input.get_aim_rotation()
-		# The animation's forward/backward axis is reversed.
-		animation_tree["parameters/strafe/blend_position"] = Vector2(motion.x, -motion.y)
-
-	elif anim == ANIMATIONS.WALK:
-		# Aim to zero (no aiming while walking).
-		#animation_tree["parameters/aim/add_amount"] = 0
-		# Change state to walk.
-		animation_tree["parameters/state/transition_request"] = "walk"
-		animation_tree["parameters/walk/blend_position"] = motion.length()
-		# Blend position for walk speed based checked motion.
-		var should_run = agent_input.running
-		if not controlled_by_player:
-			should_run = agent_running
-		if should_run:
-			animation_tree["parameters/run/transition_request"] = "run"
-		else:
-			animation_tree["parameters/run/transition_request"] = "walk"
-		
-
-
 func apply_input(delta: float):
 	if ragdoll:
-		global_position = $Human_rig/GeneralSkeleton/PhysicalsBoneHips.global_position
+		global_position = $GeneralSkeleton/Hips.global_position
 		return
 	if controlled_by_player:
 		agent_input = player_input
@@ -360,95 +350,100 @@ func apply_input(delta: float):
 	airborne_time += delta
 	if is_on_floor():
 		if airborne_time > 0.5:
-			animate(ANIMATIONS.WALK, delta)
+			# Change state to walk.
+			animation_tree["parameters/StateMachine/playback"].travel("walk")
+			
 		airborne_time = 0
 
 	var on_air = airborne_time > MIN_AIRBORNE_TIME
 
-	if on_air:
-		if (velocity.y <0): 
-			animate(ANIMATIONS.JUMP_DOWN, delta)
-	elif equipped_item_idx != -1 and agent_input.aiming and inventory[equipped_item_idx].object.get_type() == GLOBAL_DEFINITIONS.OBJECTS.PISTOL != null:
-		# Convert orientation to quaternions for interpolating rotation.
-		var q_from = orientation.basis.get_rotation_quaternion()
-		var q_to = agent_input.get_camera_base_quaternion() if controlled_by_player else agent_input.q_to
-		# Interpolate current rotation with desired one.
-		orientation.basis = Basis(q_from.slerp(q_to, delta * ROTATION_INTERPOLATE_SPEED))
 
-		# Change state to strafe.
-		animate(ANIMATIONS.STRAFE, delta)
-		
-		if agent_input.shooting and fire_cooldown.time_left == 0:
-			var shoot_origin = shoot_from.global_transform.origin
-			var shoot_dir = (agent_input.shoot_target - shoot_origin).normalized()
-
-			var bullet = preload("res://scenes/props/weapons/bullet.tscn").instantiate()
-			get_parent().add_child(bullet, true)
-			bullet.global_transform.origin = shoot_origin
-			# If we don't rotate the bullets there is no useful way to control the particles ..
-			bullet.look_at(shoot_origin + shoot_dir, Vector3.UP)
-			bullet.add_collision_exception_with(self)
-			shoot.rpc()
-	elif animation_tree["parameters/state/current_state"] == "combat":
-		if animation_tree["parameters/combat/playback"].get_current_node() == "basic_f_idle":
-			animate(ANIMATIONS.WALK, delta)
-	elif animation_tree["parameters/state/current_state"] == "talk":
-		if agent_input.talking:
-			animation_tree["parameters/state/transition_request"] = "walk"
-	elif animation_tree["parameters/state/current_state"] == "sit":
-		if animation_tree["parameters/sit/playback"].get_current_node() == "basic_f_idle":
-			animate(ANIMATIONS.WALK, delta)
-	elif animation_tree["parameters/state/current_state"] == "throw":
-		if animation_tree["parameters/throw/playback"].get_current_node() == "basic_f_idle":
-			animate(ANIMATIONS.WALK, delta)
-	elif animation_tree["parameters/state/current_state"] == "open":
-		if animation_tree["parameters/open/playback"].get_current_node() == "basic_f_idle":
-			animate(ANIMATIONS.WALK, delta)
-	elif animation_tree["parameters/state/current_state"] == "pick":
-		if animation_tree["parameters/pick/playback"].get_current_node() == "basic_f_idle":
-			animate(ANIMATIONS.WALK, delta)
-	else: # Not in air or aiming, idle.
-		# Convert orientation to quaternions for interpolating rotation.
-		var target = camera_x * motion.x + camera_z * motion.y if controlled_by_player else Vector3(motion.x, 0, motion.y)
-		if target.length() > 0.001:
+	var current_node = animation_tree["parameters/StateMachine/playback"].get_current_node()
+	if current_node == "walk" or current_node == "strafe":
+		if agent_input.aiming and equipped_item_idx != -1 and inventory[equipped_item_idx].object.get_type() == GLOBAL_DEFINITIONS.OBJECTS.PISTOL != null:
+			# Convert orientation to quaternions for interpolating rotation.
 			var q_from = orientation.basis.get_rotation_quaternion()
-			var use_nod_front = false if controlled_by_player else true
-			var q_to = Transform3D().looking_at(target, Vector3.UP, use_nod_front).basis.get_rotation_quaternion()
+			var q_to = agent_input.get_camera_base_quaternion() if controlled_by_player else agent_input.q_to
 			# Interpolate current rotation with desired one.
 			orientation.basis = Basis(q_from.slerp(q_to, delta * ROTATION_INTERPOLATE_SPEED))
-		
-		animate(ANIMATIONS.WALK, delta)
-		if agent_input.jumping and not animation_tree["parameters/jump/active"]:
-			animation_tree["parameters/jump/request"] = AnimationNodeOneShot.ONE_SHOT_REQUEST_FIRE
-			agent_input.jumping = false
-		if agent_input.punching:
-			animation_tree["parameters/state/transition_request"] = "combat"
-			animation_tree["parameters/combat/choose_action/blend_position"] = 1
-		if agent_input.kicking:
-			animation_tree["parameters/state/transition_request"] = "combat"
-			animation_tree["parameters/combat/choose_action/blend_position"] = -1
-		if agent_input.talking:
-			animation_tree["parameters/state/transition_request"] = "talk"
+
+			# Change state to strafe.
+			animation_tree["parameters/StateMachine/playback"].travel("strafe")
+			animation_tree["parameters/StateMachine/strafe/blend_position"] = Vector2(motion.x, -motion.y)
+			
+			if agent_input.shooting and fire_cooldown.time_left == 0:
+				var shoot_origin = shoot_from.global_transform.origin
+				var shoot_dir = (agent_input.shoot_target - shoot_origin).normalized()
+
+				var bullet = preload("res://scenes/props/weapons/bullet.tscn").instantiate()
+				get_parent().add_child(bullet, true)
+				bullet.global_transform.origin = shoot_origin
+				# If we don't rotate the bullets there is no useful way to control the particles ..
+				bullet.look_at(shoot_origin + shoot_dir, Vector3.UP)
+				bullet.add_collision_exception_with(self)
+				shoot.rpc()
+		else: # Not in air or aiming, idle.
+			# Convert orientation to quaternions for interpolating rotation.
+			var target = camera_x * motion.x + camera_z * motion.y if controlled_by_player else Vector3(motion.x, 0, motion.y)
+			if target.length() > 0.001:
+				var q_from = orientation.basis.get_rotation_quaternion()
+				var use_nod_front = false if controlled_by_player else true
+				var q_to = Transform3D().looking_at(target, Vector3.UP, use_nod_front).basis.get_rotation_quaternion()
+				# Interpolate current rotation with desired one.
+				orientation.basis = Basis(q_from.slerp(q_to, delta * ROTATION_INTERPOLATE_SPEED))
+			
+			# Change state to walk.
+			#animation_tree["parameters/StateMachine/conditions/stop_fall"] = true
+			animation_tree["parameters/StateMachine/playback"].travel("walk")
+			animation_tree["parameters/StateMachine/walk/BlendSpace1D/blend_position"] = motion.length()
+			
+			
+			var should_run = agent_input.running
+			if not controlled_by_player:
+				should_run = agent_running
+			if should_run:
+				animation_tree["parameters/StateMachine/walk/Transition/transition_request"] = "run"
+			else:
+				animation_tree["parameters/StateMachine/walk/Transition/transition_request"] = "walk"
+
+			if agent_input.jumping and not animation_tree["parameters/StateMachine/walk/OneShot/active"]:
+				animation_tree["parameters/StateMachine/walk/OneShot/request"] = AnimationNodeOneShot.ONE_SHOT_REQUEST_FIRE
+				agent_input.jumping = false
+			if agent_input.punching:
+				animation_tree["parameters/StateMachine/playback"].travel("execute_action")
+				animation_tree["parameters/StateMachine/execute_action/Transition/transition_request"] = "combat"
+				animation_tree["parameters/StateMachine/execute_action/StateMachine 2/BlendSpace1D/blend_position"] = 1
+			if agent_input.kicking:
+				animation_tree["parameters/StateMachine/playback"].travel("execute_action")
+				animation_tree["parameters/StateMachine/execute_action/Transition/transition_request"] = "combat"
+				animation_tree["parameters/StateMachine/execute_action/StateMachine 2/BlendSpace1D/blend_position"] = -1
+			# if agent_input.talking:
+			# 	animation_tree["parameters/state/transition_request"] = "talk"
+
+	if on_air:
+		if (velocity.y <0): 
+			animation_tree["parameters/StateMachine/playback"].travel("fall")
+	
 
 
 	root_motion = Transform3D(animation_tree.get_root_motion_rotation(), animation_tree.get_root_motion_position())
 	
 	#fix sliding when idle
-	if not (motion.length() < 0.001 and animation_tree["parameters/state/current_state"] == "walk"):# or seated:#to fix
+	if not (motion.length() < 0.001 and animation_tree["parameters/StateMachine/playback"].get_current_node() == "walk"):# or seated:#to fix
 		orientation *= root_motion
 	
 	var h_velocity = orientation.origin / delta
 
 	velocity.x = h_velocity.x
 	velocity.z = h_velocity.z
-	if not seated:
-		if animation_tree["parameters/jump/active"] and not on_air:
-			velocity.y = h_velocity.y
-		else:
-			velocity += gravity * delta
-		if on_air:
-			velocity += gravity * delta
-			
+	#if not seated:
+	if animation_tree["parameters/StateMachine/walk/OneShot/active"] and not on_air:
+		velocity.y = h_velocity.y
+	else:
+		velocity += gravity * delta
+	if on_air:
+		velocity += gravity * delta
+		
 	#DebugView.print_debug_info("velocity: %s" % DebugView.format_vector3(velocity), self)
 	#DebugView.append_debug_info("\nrootpos: %s" % DebugView.format_vector3(animation_tree.get_root_motion_position()), self)
 	#DebugView.append_debug_info("\n delta: %f" % delta, self)
@@ -468,10 +463,7 @@ func apply_input(delta: float):
 	
 func _process(delta):
 	if controlled_by_player:
-		if multiplayer.is_server():
-			apply_input(delta)
-		else:
-			animate(current_animation, delta)
+		apply_input(delta)
 	else:
 		if should_update_ai():
 			update_ai(global_position, possible_actions)
@@ -492,48 +484,50 @@ func _process(delta):
 		#do_action_by_number(agent_input.action_id)
 		action_successful = do_action_by_number_list(agent_input.action_id)
 		agent_input.action_id = -1
-		action_done = true
+		#action_done = true
 			
 func execute_action(action_info: ActionInfo):
 	var object = action_info.object
 	var is_successful = object.act(action_info.object_action_id, self)
 	if  not is_successful:
+		action_done = true
 		return false
 	if not controlled_by_player and object.include_in_utility_search():
 		$AI.fulfill_object_adv(object.get_action_adv(action_info.object_action_id))
 	match action_info.player_action_id:
 		GLOBAL_DEFINITIONS.CHARACTER_ACTION.PICK: 
-			animation_tree["parameters/state/transition_request"] = "pick"
+			animation_tree["parameters/StateMachine/playback"].travel("execute_action")
+			animation_tree["parameters/StateMachine/execute_action/Transition/transition_request"] = "pick"
 			var item = GLOBAL_DEFINITIONS.InventoryItem.new()
 			item.object = action_info.object
 			item.type = action_info.object.get_type()
-			item.object.reparent($Human_rig/GeneralSkeleton/GunBone/ShootFrom)
-			item.object.transform = Transform3D(Basis.from_euler(Vector3(-1.57, -1.57 , 0)), Vector3(0, 0, 0))
+			item.object.reparent(shoot_from)
+			item.object.transform = Transform3D()
+			
 			inventory.append(item)
 			equipped_item_idx = inventory.size()-1
 			$ControllablePlayer/UI.update_inventory(inventory, equipped_item_idx)
 			object.equip()
 			variables_stack.append(item)
 			
-			# current_pistol = object
-			# current_pistol.reparent($Human_rig/GeneralSkeleton/GunBone/ShootFrom)
-			# current_pistol.transform = Transform3D(Basis.from_euler(Vector3(-1.57, -1.57 , 0)), Vector3(0, 0, 0))
 		GLOBAL_DEFINITIONS.CHARACTER_ACTION.THROW: 
 			animation_tree["parameters/state/transition_request"] = "throw"
 		GLOBAL_DEFINITIONS.CHARACTER_ACTION.SIT: 
 			#TODO: when runnning start pos different
-			animation_tree["parameters/state/transition_request"] = "sit"
-			animation_tree["parameters/sit/conditions/stand"] =  false
+			animation_tree["parameters/StateMachine/playback"].travel("execute_action")
+			animation_tree["parameters/StateMachine/execute_action/Transition/transition_request"] = "sit"
+			animation_tree["parameters/StateMachine/execute_action/StateMachine/playback"].travel("items_stand_to_sit")
+			#animation_tree["parameters/sit/conditions/stand"] =  false
 			var sit_position: Transform3D = object.get_node("SitPosition").global_transform
 			global_position.x = sit_position.origin.x
 			global_position.z = sit_position.origin.z
 			orientation.basis = sit_position.basis
 			#$CollisionShape3D.disabled = true
-			seated = true
+			#seated = true
 		GLOBAL_DEFINITIONS.CHARACTER_ACTION.STAND: 
-			animation_tree["parameters/sit/conditions/stand"] =  true
-			$CollisionShape3D.disabled = false
-			seated = false
+			animation_tree["parameters/StateMachine/execute_action/StateMachine/playback"].travel("items_sit_to_stand")
+			#$CollisionShape3D.disabled = false
+			#seated = false
 		GLOBAL_DEFINITIONS.CHARACTER_ACTION.OPEN: 
 			pass
 			#animation_tree["parameters/state/transition_request"] = "open"
@@ -545,6 +539,8 @@ func execute_action(action_info: ActionInfo):
 			current_car = null
 			$CollisionShape3D.disabled = false
 			show()
+		_: 
+			action_done = true
 	return true
 	
 func do_action_by_number_list(num):
@@ -583,6 +579,8 @@ func _on_interaction_entered(area):
 		return
 	_on_actions_update(object)
 	object.state_changed.connect(_on_actions_update)
+	if object.has_signal("character_event_broadcast"):
+		object.character_event_broadcast.connect(_on_character_event)
 	
 func _on_interaction_exited(area):
 	var object = area.get_parent()
@@ -602,6 +600,12 @@ func _on_inventory_item_changed(selected_idx):
 	inventory[equipped_item_idx].object.unequip()
 	inventory[selected_idx].object.equip()
 	equipped_item_idx = selected_idx
+
+func _on_character_event(ch, event):
+	var perception = Perception.new()
+	perception.event = event
+	perception.character = ch
+	perceptions.append(perception)
 
 @rpc("call_local")
 func shoot():
@@ -623,7 +627,8 @@ func _on_body_collision(body: PhysicsBody3D):
 	
 @rpc("call_local")
 func hit():
-	$Human_rig/GeneralSkeleton.physical_bones_start_simulation()
+	$GeneralSkeleton.physical_bones_start_simulation()
+	$MainCollider.disabled = true
 	ragdoll = true
 	schedule_ragdoll_end()
 	#animation_tree["parameters/state/transition_request"] = "hit"
@@ -631,7 +636,8 @@ func hit():
 	
 func schedule_ragdoll_end():
 	await get_tree().create_timer(10.0).timeout
-	$Human_rig/GeneralSkeleton.physical_bones_stop_simulation()
+	$GeneralSkeleton.physical_bones_stop_simulation()
+	$MainCollider.disabled = false
 	ragdoll = false
 	
 func remove_object_from_action_list(object):

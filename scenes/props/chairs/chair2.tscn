@@ -22,10 +22,11 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.208809, 0.710571, 0.262085)
 shape = SubResource("BoxShape3D_olf46")
 
 [node name="SitPosition" type="Node3D" parent="." index="2"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.211606, 0, 0.838452)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.211606, 0, 0.590064)
 
 [node name="StaticBody3D" type="StaticBody3D" parent="." index="3"]
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="StaticBody3D" index="0"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.211401, 0.540627, 0.237564)
 shape = SubResource("BoxShape3D_pcjm7")
+disabled = true
