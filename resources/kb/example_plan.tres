@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="DaySchedule" load_steps=5 format=3 uid="uid://k7o8oq4qvnp6"]
+
+[ext_resource type="Script" path="res://scripts/resource_scripts/planning/daily_step_resource.gd" id="1_7ipw4"]
+[ext_resource type="Script" path="res://scripts/resource_scripts/planning/plan_resource.gd" id="2_6vago"]
+
+[sub_resource type="Resource" id="Resource_i55i3"]
+script = ExtResource("1_7ipw4")
+hours = 0
+minutes = 0
+step_name = "GotoLocation"
+step_params = ["johns house", false]
+
+[sub_resource type="Resource" id="Resource_vn4yd"]
+script = ExtResource("1_7ipw4")
+hours = 0
+minutes = 0
+step_name = "ShootPerson"
+step_params = ["ch0"]
+
+[resource]
+script = ExtResource("2_6vago")
+schedule = Array[ExtResource("1_7ipw4")]([SubResource("Resource_i55i3"), SubResource("Resource_vn4yd")])

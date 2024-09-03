@@ -1,0 +1,46 @@
+[gd_resource type="Resource" script_class="NeedsCurves" load_steps=10 format=3 uid="uid://cakmo0hymjnkd"]
+
+[ext_resource type="Script" path="res://scripts/resource_scripts/kb/needs_curves_resource.gd" id="1_6sxsb"]
+
+[sub_resource type="Curve" id="Curve_65f1a"]
+_data = [Vector2(0.0514019, 0.615385), 0.0, 0.0, 0, 0, Vector2(0.574766, 0), 0.0, 0.0, 0, 0]
+point_count = 2
+
+[sub_resource type="Curve" id="Curve_vvmar"]
+_data = [Vector2(0.00467289, 0.56044), 0.0, 0.0, 0, 0, Vector2(0.990654, 0), 0.0, 0.0, 0, 0]
+point_count = 2
+
+[sub_resource type="Curve" id="Curve_iyuvx"]
+_data = [Vector2(0.0280374, 0.978022), 0.0, 0.0, 0, 0, Vector2(0.67757, 0), 0.0, 0.0, 0, 0]
+point_count = 2
+
+[sub_resource type="Curve" id="Curve_mex8n"]
+_data = [Vector2(0.0140187, 0.692308), 0.0, 0.0, 0, 0, Vector2(0.523364, 0.252747), 0.0, 0.0, 0, 0, Vector2(0.981308, 0.604396), 0.0, 0.0, 0, 0]
+point_count = 3
+
+[sub_resource type="Curve" id="Curve_gqotl"]
+_data = [Vector2(0.00467289, 1), 0.0, -2.35165, 0, 0, Vector2(0.733645, 0.175824), 0.0, 0.0, 0, 0]
+point_count = 2
+
+[sub_resource type="Curve" id="Curve_2m6i8"]
+_data = [Vector2(0.0747664, 0.67033), 0.0, 0.0, 0, 0, Vector2(0.878505, 0.043956), 0.0, 0.0, 0, 0]
+point_count = 2
+
+[sub_resource type="Curve" id="Curve_vspaj"]
+_data = [Vector2(0.0373832, 0.527472), 0.0, 0.0, 0, 0, Vector2(0.621495, 0), 0.0, 0.0, 0, 0, Vector2(0.981308, 0), 0.0, 0.0, 0, 0]
+point_count = 3
+
+[sub_resource type="Curve" id="Curve_ff7sc"]
+_data = [Vector2(0, 0.527472), 0.0, 0.0, 0, 0, Vector2(0.5, 0.241758), 0.0, 0.0, 0, 0, Vector2(0.943925, 0.538462), 0.0, 0.0, 0, 0]
+point_count = 3
+
+[resource]
+script = ExtResource("1_6sxsb")
+hunger_curve = SubResource("Curve_gqotl")
+comfort_curve = SubResource("Curve_vvmar")
+hygiene_curve = SubResource("Curve_2m6i8")
+bladder_curve = SubResource("Curve_65f1a")
+energy_curve = SubResource("Curve_iyuvx")
+fun_curve = SubResource("Curve_mex8n")
+social_curve = SubResource("Curve_ff7sc")
+room_curve = SubResource("Curve_vspaj")

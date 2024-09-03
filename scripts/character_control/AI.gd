@@ -3,19 +3,9 @@ class_name AI
 
 const MIN_DISTANCE_TO_DOOR = 0.1
 
-@export var hunger_curve: Curve
-@export var comfort_curve: Curve
-@export var hygiene_curve: Curve
-@export var bladder_curve: Curve
-@export var energy_curve: Curve
-@export var fun_curve: Curve
-@export var social_curve: Curve
-@export var room_curve: Curve
-
-@export var day_schedules: Array[DaySchedule]
 @export var agent_kb: KnowledgeBase
 
-var current_event: DaySchedule = null
+var current_event: DailyStep = null
 var current_event_idx: int = 0
 
 
@@ -59,32 +49,19 @@ func update_needs(needs: NpcNeeds, action: GLOBAL_DEFINITIONS.AgentInput):
 	
 func get_object_score(needs: NpcNeeds, objectAd: GLOBAL_DEFINITIONS.ObjectAdvertisement):
 	var score = 0
-	score += hunger_curve.sample_baked(needs.hunger) * objectAd.hunger
-	score += comfort_curve.sample_baked(needs.comfort) * objectAd.comfort
-	score += hygiene_curve.sample_baked(needs.hygiene) * objectAd.hygiene
-	score += bladder_curve.sample_baked(needs.bladder) * objectAd.bladder
-	score += energy_curve.sample_baked(needs.energy) * objectAd.energy
-	score += fun_curve.sample_baked(needs.fun) * objectAd.fun
-	score += social_curve.sample_baked(needs.social) * objectAd.social
-	score += room_curve.sample_baked(needs.room) * objectAd.room
+	score += agent_kb.needs_curves.hunger_curve.sample_baked(needs.hunger) * objectAd.hunger
+	score += agent_kb.needs_curves.comfort_curve.sample_baked(needs.comfort) * objectAd.comfort
+	score += agent_kb.needs_curves.hygiene_curve.sample_baked(needs.hygiene) * objectAd.hygiene
+	score += agent_kb.needs_curves.bladder_curve.sample_baked(needs.bladder) * objectAd.bladder
+	score += agent_kb.needs_curves.energy_curve.sample_baked(needs.energy) * objectAd.energy
+	score += agent_kb.needs_curves.fun_curve.sample_baked(needs.fun) * objectAd.fun
+	score += agent_kb.needs_curves.social_curve.sample_baked(needs.social) * objectAd.social
+	score += agent_kb.needs_curves.room_curve.sample_baked(needs.room) * objectAd.room
 	
 	return score
 	
-class NpcPersonality:
-	var neat: float
-	var outgoing: float
-	var active: float
-	var playful: float
-	var nice: float
-	
-class NpcRelationships:
-	var relation_scores: Array[float]
-	
 
 class NpcState:
-	var name: String
-	var id: int
-	var backstory: String
 	
 	var health: int
 	var stamina: int
@@ -92,12 +69,7 @@ class NpcState:
 	
 	var needs: NpcNeeds
 	
-	var personality: NpcPersonality
-	
-	var relationships: NpcRelationships
-	
 @onready var state: NpcState = NpcState.new()
-var going = false
 
 class ActionScore:
 	var idx: int
@@ -167,10 +139,14 @@ func update(player_position: Vector3, possible_obj_actions: Array, perceptions: 
 	
 	if current_bt == null and current_event == null:
 		if not current_event_idx == -1:
-			var next_event = day_schedules[current_event_idx]
+			var next_event = agent_kb.daily_plan.schedule[current_event_idx]
 			if minutes > next_event.hours * 60 + next_event.minutes:
-				current_event = day_schedules[current_event_idx]
-				current_bt = BtRulesManager.build_bt(current_event.step)
+				current_event = agent_kb.daily_plan.schedule[current_event_idx]
+
+				var step = PlanStep.new()
+				step.name = current_event.step_name
+				step.params = current_event.step_params
+				current_bt = BtRulesManager.build_bt(step)
 
 		# #check schedule
 		# for event in day_schedules:
@@ -195,7 +171,7 @@ func update(player_position: Vector3, possible_obj_actions: Array, perceptions: 
 			if current_event != null:
 				current_event = null
 				current_event_idx += 1
-				if current_event_idx >= day_schedules.size():
+				if current_event_idx >= agent_kb.daily_plan.schedule.size():
 					current_event_idx = -1
 	
 	for perception in perceptions:
