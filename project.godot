@@ -20,11 +20,9 @@ config/icon="res://icon.svg"
 SimpleGrass="*res://addons/simplegrasstextured/singleton.tscn"
 Locations="*res://scenes/utilities/locations.tscn"
 CurrentTimeManager="*res://scenes/utilities/time_manager.tscn"
-BtRulesManager="*res://scenes/utilities/bt_rules_manager.tscn"
 Characters="*res://scenes/utilities/character_manager.tscn"
 DebugView="*res://scenes/debug/debug_view.tscn"
 HumanizerGlobal="*res://addons/humanizer/scenes/humanizer_global.tscn"
-IntManager="*res://scripts/interactions_manager.gd"
 
 [editor_plugins]
 

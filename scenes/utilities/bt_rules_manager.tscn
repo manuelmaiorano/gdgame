@@ -1,6 +1,6 @@
 [gd_scene load_steps=12 format=3 uid="uid://4i5ljfwb2qlx"]
 
-[ext_resource type="Script" path="res://scripts/btrules_manager.gd" id="1_2g52p"]
+[ext_resource type="Script" path="res://scripts/rules/btrules.gd" id="1_2g52p"]
 [ext_resource type="Script" path="res://scripts/resource_scripts/planning/step_resource.gd" id="2_b23w8"]
 [ext_resource type="Script" path="res://scripts/resource_scripts/planning/bt_resource.gd" id="2_w415o"]
 

@@ -46,6 +46,7 @@ func update_needs(needs: NpcNeeds, action: GLOBAL_DEFINITIONS.AgentInput):
 	needs.fun -= step
 	needs.social -= step
 	needs.room -= step
+	DebugView.append_debug_info("NEEDS:\n hunger: %f, \ncomfort: %f \n" % [needs.hunger, needs.comfort], player)
 	
 func get_object_score(needs: NpcNeeds, objectAd: GLOBAL_DEFINITIONS.ObjectAdvertisement):
 	var score = 0
@@ -146,7 +147,7 @@ func update(player_position: Vector3, possible_obj_actions: Array, perceptions: 
 				var step = PlanStep.new()
 				step.name = current_event.step_name
 				step.params = current_event.step_params
-				current_bt = BtRulesManager.build_bt(step)
+				current_bt = BTRules.build_bt(step)
 
 		# #check schedule
 		# for event in day_schedules:
@@ -162,7 +163,7 @@ func update(player_position: Vector3, possible_obj_actions: Array, perceptions: 
 		var step = PlanStep.new()
 		step.name = "SearchObjActionUtility"
 		step.params = [false]
-		current_bt = BtRulesManager.build_bt(step)
+		current_bt = BTRules.build_bt(step)
 
 	if feedback != GLOBAL_DEFINITIONS.AI_FEEDBACK.RUNNING:
 		var outcome = process_BT(current_bt, feedback)
@@ -335,7 +336,7 @@ func build_nav_steps(bt_node):
 					var door_step = PlanStep.new()
 					door_step.name = "OpenNearbyDoor"
 					door_step.params = []
-					btNode_child = BtRulesManager.build_bt(door_step)
+					btNode_child = BTRules.build_bt(door_step)
 				LocationGraphLink.CROSSING_RULE.CROSSWALK:
 					var crosswalk_step = PlanStep.new()
 					crosswalk_step.step_type = PlanStep.STEP_TYPE.GOTO_POSITION

@@ -1,31 +1,13 @@
-class_name BTManager
+class_name BTRules
 extends Node
 
-# @export var rules: Array[BTInfo]
-# var script_rules: RULES
-
-# var name2rule = {}
-
-
-# func _ready():
-# 	for rule in rules:
-# 		name2rule[rule.parent_step.name] = rule
-# 	script_rules = RULES.new()
-
-# func build_bt(step: PlanStep):
-# 	var bt =  script_rules.build_bt(step)
-# 	return bt
-
-# func get_bt_info(name: String):
-# 	return name2rule[name]
-
-func build_bt(step: PlanStep):
-	var callable = Callable(self, step.name)
+static func build_bt(step: PlanStep):
+	var callable = Callable(BTRules, step.name)
 	if step.params != null:
 		return callable.callv(step.params) 
 	return callable.call()
 
-func Goto(should_run) :
+static func Goto(should_run) :
 	var bt_node = AI.BTNode.new()
 	bt_node.name = "Goto"
 	bt_node.type = BTInfo.BTNodeType.TASK
@@ -36,7 +18,7 @@ func Goto(should_run) :
 	bt_node.step = step
 	return bt_node
 
-func AimAt() :
+static func AimAt() :
 	var bt_node = AI.BTNode.new()
 	bt_node.name = "AimAt"
 	bt_node.type = BTInfo.BTNodeType.TASK
@@ -45,7 +27,7 @@ func AimAt() :
 	bt_node.step = step
 	return bt_node
 
-func BroadCast(event) :
+static func BroadCast(event) :
 	var bt_node = AI.BTNode.new()
 	bt_node.name = "AimAt"
 	bt_node.type = BTInfo.BTNodeType.TASK
@@ -55,7 +37,7 @@ func BroadCast(event) :
 	bt_node.step = step
 	return bt_node
 
-func Execute() :
+static func Execute() :
 	var bt_node = AI.BTNode.new()
 	bt_node.name = "ExexuteStored"
 	bt_node.type = BTInfo.BTNodeType.TASK
@@ -64,7 +46,7 @@ func Execute() :
 	bt_node.step = step
 	return bt_node
 
-func ExecuteNearbyByType(type) :
+static func ExecuteNearbyByType(type) :
 	var bt_node = AI.BTNode.new()
 	bt_node.name = "ExexuteStored"
 	bt_node.type = BTInfo.BTNodeType.TASK
@@ -74,7 +56,7 @@ func ExecuteNearbyByType(type) :
 	bt_node.step = step
 	return bt_node
 
-func ExecuteChAction(action) :
+static func ExecuteChAction(action) :
 	var bt_node = AI.BTNode.new()
 	bt_node.name = "ExexuteChAction"
 	bt_node.type = BTInfo.BTNodeType.TASK
@@ -84,7 +66,7 @@ func ExecuteChAction(action) :
 	bt_node.step = step
 	return bt_node
 
-func QueryInventory(type: GLOBAL_DEFINITIONS.OBJECTS = GLOBAL_DEFINITIONS.OBJECTS.NONE) :
+static func QueryInventory(type: GLOBAL_DEFINITIONS.OBJECTS = GLOBAL_DEFINITIONS.OBJECTS.NONE) :
 	var bt_node = AI.BTNode.new()
 	bt_node.name = "QueryInventory"
 	bt_node.type = BTInfo.BTNodeType.TASK
@@ -95,7 +77,7 @@ func QueryInventory(type: GLOBAL_DEFINITIONS.OBJECTS = GLOBAL_DEFINITIONS.OBJECT
 	return bt_node
 
 
-func QueryPerson(name, property) :
+static func QueryPerson(name, property) :
 	var bt_node = AI.BTNode.new()
 	bt_node.name = "QueryPerson"
 	bt_node.type = BTInfo.BTNodeType.TASK
@@ -106,7 +88,7 @@ func QueryPerson(name, property) :
 	bt_node.step = step
 	return bt_node
 
-func QueryClose(type: GLOBAL_DEFINITIONS.OBJECTS = GLOBAL_DEFINITIONS.OBJECTS.NONE) :
+static func QueryClose(type: GLOBAL_DEFINITIONS.OBJECTS = GLOBAL_DEFINITIONS.OBJECTS.NONE) :
 	var bt_node = AI.BTNode.new()
 	bt_node.name = "QueryClose"
 	bt_node.type = BTInfo.BTNodeType.TASK
@@ -116,7 +98,7 @@ func QueryClose(type: GLOBAL_DEFINITIONS.OBJECTS = GLOBAL_DEFINITIONS.OBJECTS.NO
 	bt_node.step = step
 	return bt_node
 
-func QueryUtility() :
+static func QueryUtility() :
 	var bt_node = AI.BTNode.new()
 	bt_node.name = "QueryUtility"
 	bt_node.type = BTInfo.BTNodeType.TASK
@@ -125,7 +107,7 @@ func QueryUtility() :
 	bt_node.step = step
 	return bt_node
 
-func QueryNavigation(loc_name) :
+static func QueryNavigation(loc_name) :
 	var bt_node = AI.BTNode.new()
 	bt_node.name = "QueryNavigation"
 	bt_node.type = BTInfo.BTNodeType.TASK
@@ -136,7 +118,7 @@ func QueryNavigation(loc_name) :
 	bt_node.step = step
 	return bt_node
 
-func ExecuteNavigation(should_run):
+static func ExecuteNavigation(should_run):
 	var bt_node = AI.BTNode.new()
 	bt_node.name = "ExecNavigation"
 	bt_node.type = BTInfo.BTNodeType.NAV
@@ -145,7 +127,7 @@ func ExecuteNavigation(should_run):
 	bt_node.step = step
 	return bt_node
 
-func Equip(type: GLOBAL_DEFINITIONS.OBJECTS = GLOBAL_DEFINITIONS.OBJECTS.NONE) :
+static func Equip(type: GLOBAL_DEFINITIONS.OBJECTS = GLOBAL_DEFINITIONS.OBJECTS.NONE) :
 	var bt_node = AI.BTNode.new()
 	bt_node.name = "Equip"
 	bt_node.type = BTInfo.BTNodeType.TASK
@@ -155,7 +137,7 @@ func Equip(type: GLOBAL_DEFINITIONS.OBJECTS = GLOBAL_DEFINITIONS.OBJECTS.NONE) :
 	bt_node.step = step
 	return bt_node
 
-func UnEquip() :
+static func UnEquip() :
 	var bt_node = AI.BTNode.new()
 	bt_node.name = "UnEquip"
 	bt_node.type = BTInfo.BTNodeType.TASK
@@ -164,7 +146,7 @@ func UnEquip() :
 	bt_node.step = step
 	return bt_node
 
-func Selector(steps):
+static func Selector(steps):
 	var bt_node = AI.BTNode.new()
 	bt_node.type = BTInfo.BTNodeType.SELECTOR
 	for btstep in steps:
@@ -173,7 +155,7 @@ func Selector(steps):
 	
 	return bt_node
 
-func Sequence(steps):
+static func Sequence(steps):
 	var bt_node = AI.BTNode.new()
 	bt_node.type = BTInfo.BTNodeType.SEQUENCE
 	for btstep in steps:
@@ -182,7 +164,7 @@ func Sequence(steps):
 	
 	return bt_node
 
-func Retry(btstep, amount):
+static func Retry(btstep, amount):
 	var bt_node = AI.BTNode.new()
 	bt_node.type = BTInfo.BTNodeType.RETRY
 	bt_node.attempts = amount
@@ -191,39 +173,39 @@ func Retry(btstep, amount):
 	
 	return bt_node
 
-func GotoLocation(location_name, should_run):
+static func GotoLocation(location_name, should_run):
 	return Sequence([
 		QueryNavigation(location_name),
 		ExecuteNavigation(should_run)
 	])
 
-func SearchObjActionUtility(should_run) :
+static func SearchObjActionUtility(should_run) :
 	return Sequence([
 		QueryUtility(),
 		Goto(should_run),
 		Execute()
 	])
 
-func SearchObjAction(type: GLOBAL_DEFINITIONS.OBJECTS = GLOBAL_DEFINITIONS.OBJECTS.NONE) :
+static func SearchObjAction(type: GLOBAL_DEFINITIONS.OBJECTS = GLOBAL_DEFINITIONS.OBJECTS.NONE) :
 	return Sequence([
 		QueryClose(type),
 		Goto(false),
 		Execute()
 	])
 
-func AcquireObj(type):
+static func AcquireObj(type):
 	return Selector([
 		QueryInventory(type),
 		SearchObjAction(type)
 	])
 
-func EquipObj(type):
+static func EquipObj(type):
 	return Sequence([
 		AcquireObj(type),
 		Equip()
 	])
 
-func ShootPerson(name):
+static func ShootPerson(name):
 	return Selector([
 		Sequence([
 			EquipObj(GLOBAL_DEFINITIONS.OBJECTS.PISTOL),
@@ -242,7 +224,7 @@ func ShootPerson(name):
 		UnEquip()
 	])
 
-func OpenNearbyDoor():
+static func OpenNearbyDoor():
 	return Selector([
 		ExecuteNearbyByType(Door.ACTION.OPEN),
 		Sequence([
@@ -251,7 +233,7 @@ func OpenNearbyDoor():
 		])
 	])
 
-func CrossCrossWalk():
+static func CrossCrossWalk():
 	return Selector([
 		ExecuteNearbyByType(Door.ACTION.OPEN),
 		Sequence([
@@ -260,7 +242,7 @@ func CrossCrossWalk():
 		])
 	])
 
-func RunHome():
+static func RunHome():
 	return Retry(
 		GotoLocation("home", true), 3
 	)
