@@ -16,12 +16,14 @@ var nav_steps = null
 
 var player = null
 
+enum BTNodeType {SEQUENCE, SELECTOR, TASK, RETRY, NAV}
+
 class BTNode:
 	var name: String
 	var step: PlanStep
 	var children: Array[BTNode]
 	var parent: BTNode
-	var type: BTInfo.BTNodeType
+	var type: BTNodeType
 	var attempts: int
 
 class NpcNeeds:
@@ -184,7 +186,7 @@ enum ProcessReturn {BRANCH_DONE, SUCCESS, FAILURE, WAIT}
 
 func process_BT(bt_node: BTNode, task_feedback: GLOBAL_DEFINITIONS.AI_FEEDBACK, ind_amount: int = 0) -> ProcessReturn:
 	match bt_node.type:
-		BTInfo.BTNodeType.SELECTOR:
+		BTNodeType.SELECTOR:
 			DebugView.append_debug_info(" ".repeat(ind_amount) + "selector: \n", player)
 			var branches = 0
 			for child in bt_node.children:
@@ -201,7 +203,7 @@ func process_BT(bt_node: BTNode, task_feedback: GLOBAL_DEFINITIONS.AI_FEEDBACK, 
 			if branches == bt_node.children.size():
 				return ProcessReturn.BRANCH_DONE
 			return ProcessReturn.FAILURE
-		BTInfo.BTNodeType.SEQUENCE:
+		BTNodeType.SEQUENCE:
 			DebugView.append_debug_info(" ".repeat(ind_amount) + "sequence: \n", player)
 			var branches = 0
 			for idx in bt_node.children.size():
@@ -219,7 +221,7 @@ func process_BT(bt_node: BTNode, task_feedback: GLOBAL_DEFINITIONS.AI_FEEDBACK, 
 			if branches == bt_node.children.size():
 				return ProcessReturn.BRANCH_DONE
 			return ProcessReturn.SUCCESS
-		BTInfo.BTNodeType.NAV:
+		BTNodeType.NAV:
 			DebugView.append_debug_info(" ".repeat(ind_amount) + "nav: \n", player)
 			build_nav_steps(bt_node)
 			var branches = 0
@@ -238,7 +240,7 @@ func process_BT(bt_node: BTNode, task_feedback: GLOBAL_DEFINITIONS.AI_FEEDBACK, 
 			if branches == bt_node.children.size():
 				return ProcessReturn.BRANCH_DONE
 			return ProcessReturn.SUCCESS
-		BTInfo.BTNodeType.RETRY:
+		BTNodeType.RETRY:
 			while current_retry_amount < bt_node.attempts:
 				DebugView.append_debug_info(" ".repeat(ind_amount) + "retry(%d): \n" % current_retry_amount, player)
 				var child = bt_node.children[0]
@@ -256,7 +258,7 @@ func process_BT(bt_node: BTNode, task_feedback: GLOBAL_DEFINITIONS.AI_FEEDBACK, 
 					return ProcessReturn.WAIT
 			current_retry_amount = 0
 			return ProcessReturn.FAILURE
-		BTInfo.BTNodeType.TASK:
+		BTNodeType.TASK:
 			DebugView.append_debug_info(" ".repeat(ind_amount) + "task: %s\n" % bt_node.name, player)
 			if bt_node.step.step_type == PlanStep.STEP_TYPE.QUERY_PERSON and bt_node.step.property_name == "ragdoll":
 				pass
@@ -276,62 +278,62 @@ func process_BT(bt_node: BTNode, task_feedback: GLOBAL_DEFINITIONS.AI_FEEDBACK, 
 		_: return ProcessReturn.BRANCH_DONE 
 
 
-var btstack: Array[BTNode] = []
-var curr_idx = 0
+# var btstack: Array[BTNode] = []
+# var curr_idx = 0
 
-func process_BT_stack(bt_node: BTNode, task_feedback: GLOBAL_DEFINITIONS.AI_FEEDBACK, ind_amount: int = 0):
-	btstack.append(bt_node)
-	btstack.pop_back()
-	while true:
-		var node: BTNode = btstack.back()
-		match node.type:
-			BTInfo.BTNodeType.SELECTOR:
-				DebugView.append_debug_info(" ".repeat(ind_amount) + "selector: \n", player)
-				if curr_idx == 0:
-					btstack.append(node.children[0])
-					continue
-				if curr_idx == node.children.size()-1:
-					btstack.pop_back()
-					curr_idx = 0
-					continue
-				if task_feedback == GLOBAL_DEFINITIONS.AI_FEEDBACK.FAILED:
-					btstack.pop_back()
-					continue
-				if task_feedback == GLOBAL_DEFINITIONS.AI_FEEDBACK.DONE:
-					curr_idx += 1
-					btstack.append(node.children[curr_idx])
-					continue
+# func process_BT_stack(bt_node: BTNode, task_feedback: GLOBAL_DEFINITIONS.AI_FEEDBACK, ind_amount: int = 0):
+# 	btstack.append(bt_node)
+# 	btstack.pop_back()
+# 	while true:
+# 		var node: BTNode = btstack.back()
+# 		match node.type:
+# 			BTInfo.BTNodeType.SELECTOR:
+# 				DebugView.append_debug_info(" ".repeat(ind_amount) + "selector: \n", player)
+# 				if curr_idx == 0:
+# 					btstack.append(node.children[0])
+# 					continue
+# 				if curr_idx == node.children.size()-1:
+# 					btstack.pop_back()
+# 					curr_idx = 0
+# 					continue
+# 				if task_feedback == GLOBAL_DEFINITIONS.AI_FEEDBACK.FAILED:
+# 					btstack.pop_back()
+# 					continue
+# 				if task_feedback == GLOBAL_DEFINITIONS.AI_FEEDBACK.DONE:
+# 					curr_idx += 1
+# 					btstack.append(node.children[curr_idx])
+# 					continue
 
-			BTInfo.BTNodeType.SEQUENCE:
-				DebugView.append_debug_info(" ".repeat(ind_amount) + "sequence: \n", player)
+# 			BTInfo.BTNodeType.SEQUENCE:
+# 				DebugView.append_debug_info(" ".repeat(ind_amount) + "sequence: \n", player)
 				
-			BTInfo.BTNodeType.NAV:
-				DebugView.append_debug_info(" ".repeat(ind_amount) + "nav: \n", player)
-				#build_nav_steps(bt_node, node.step.should_run)
+# 			BTInfo.BTNodeType.NAV:
+# 				DebugView.append_debug_info(" ".repeat(ind_amount) + "nav: \n", player)
+# 				#build_nav_steps(bt_node, node.step.should_run)
 				
-			BTInfo.BTNodeType.RETRY:
-				pass
-			BTInfo.BTNodeType.TASK:
-				current_step_task = btstack.back().step
-				DebugView.append_debug_info(" ".repeat(ind_amount) + "task: %s\n" % bt_node.name, player)
+# 			BTInfo.BTNodeType.RETRY:
+# 				pass
+# 			BTInfo.BTNodeType.TASK:
+# 				current_step_task = btstack.back().step
+# 				DebugView.append_debug_info(" ".repeat(ind_amount) + "task: %s\n" % bt_node.name, player)
 				
 				
 				
 
 
 func build_nav_steps(bt_node):
-	bt_node.type = BTInfo.BTNodeType.SEQUENCE
+	bt_node.type = BTNodeType.SEQUENCE
 	for step in nav_steps:
 		var btNode_child = BTNode.new()
 		btNode_child.step = step
 		btNode_child.parent = bt_node
 		if step.step_type == PlanStep.STEP_TYPE.GOTO_POSITION:
-			btNode_child.type = BTInfo.BTNodeType.TASK
+			btNode_child.type = BTNodeType.TASK
 			btNode_child.step.should_run = bt_node.step.should_run
 		else:
 			match step.crossing_rule:
 				LocationGraphLink.CROSSING_RULE.NONE:
-					btNode_child.type = BTInfo.BTNodeType.TASK
+					btNode_child.type = BTNodeType.TASK
 				LocationGraphLink.CROSSING_RULE.DOOR:
 					var door_step = PlanStep.new()
 					door_step.name = "OpenNearbyDoor"

@@ -64,20 +64,20 @@ var location_hierarchy_node: LocationHierarchyNode
 func _ready():
 	build_hierarchy()
 	find_parents_and_levels()
-	var plan = plan_navigation_from_names("Harris house", "johns house")
-	print("Full Path1:")
-	for step in plan:
-		print(step.name)
-		print(step.position)
-	return
-	var pos1 = get_parent().get_node("Node3D").get_node("posA").global_position
-	var pos2 = get_parent().get_node("Node3D").get_node("posB").global_position
+	# var plan = plan_navigation_from_names("Harris house", "johns house")
+	# print("Full Path1:")
+	# for step in plan:
+	# 	print(step.name)
+	# 	print(step.position)
+	# return
+	# var pos1 = get_parent().get_node("Node3D").get_node("posA").global_position
+	# var pos2 = get_parent().get_node("Node3D").get_node("posB").global_position
 	
-	plan = plan_navigation_from_pos(pos1, pos2)
-	print("Full Path:")
-	for step in plan:
-		print(step.name)
-		print(step.position)
+	# plan = plan_navigation_from_pos(pos1, pos2)
+	# print("Full Path:")
+	# for step in plan:
+	# 	print(step.name)
+	# 	print(step.position)
 
 func build_hierarchy():
 	location_hierarchy_node = LocationHierarchyNode.new()
@@ -288,27 +288,27 @@ func search_graph(hierarchy: LocationHierarchyNode, start: String, end: String) 
 
 	return path
 
-func shortestPath(graph: LocationGraph, start: String, end: String) -> Array[String]:
-	if end == LocationGraph.OUT_NODE_NAME:
-		if graph.out_strategy == LocationGraph.OUT_STRATEGY.NONE:
-			return []
-	#Specify link from out to each node?
-	# if start == LocationGraph.OUT_NODE_NAME:
-	# 	if graph.out_strategy == LocationGraph.OUT_STRATEGY.NONE:
-	# 		return [end]
+# func shortestPath(graph: LocationGraph, start: String, end: String) -> Array[String]:
+# 	if end == LocationGraph.OUT_NODE_NAME:
+# 		if graph.out_strategy == LocationGraph.OUT_STRATEGY.NONE:
+# 			return []
+# 	#Specify link from out to each node?
+# 	# if start == LocationGraph.OUT_NODE_NAME:
+# 	# 	if graph.out_strategy == LocationGraph.OUT_STRATEGY.NONE:
+# 	# 		return [end]
 	
-	var queue = [[start]]
-	var visited = {}
-	while queue.size() > 0:
-		var path = queue.pop_front()
-		var currentNode = path[path.size() - 1]
-		if currentNode == end:
-			return path
-		elif not visited.has(currentNode):
-			var neighbors = graph[currentNode]
-			queue.append(neighbors)
-			visited[currentNode] = null
-	return []
+# 	var queue = [[start]]
+# 	var visited = {}
+# 	while queue.size() > 0:
+# 		var path = queue.pop_front()
+# 		var currentNode = path[path.size() - 1]
+# 		if currentNode == end:
+# 			return path
+# 		elif not visited.has(currentNode):
+# 			var neighbors = graph[currentNode]
+# 			queue.append(neighbors)
+# 			visited[currentNode] = null
+# 	return []
 
 func shortestPathAstar(graph: LocationGraph, astar: GraphAStar, start: String, end: String) -> Array[String]:
 	if end == LocationGraph.OUT_NODE_NAME:

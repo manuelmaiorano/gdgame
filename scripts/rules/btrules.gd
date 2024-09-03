@@ -10,7 +10,7 @@ static func build_bt(step: PlanStep):
 static func Goto(should_run) :
 	var bt_node = AI.BTNode.new()
 	bt_node.name = "Goto"
-	bt_node.type = BTInfo.BTNodeType.TASK
+	bt_node.type = AI.BTNodeType.TASK
 	var step = PlanStep.new()
 	step.step_type = PlanStep.STEP_TYPE.GOTO_POSITION
 	step.use_stored_pos = true
@@ -21,7 +21,7 @@ static func Goto(should_run) :
 static func AimAt() :
 	var bt_node = AI.BTNode.new()
 	bt_node.name = "AimAt"
-	bt_node.type = BTInfo.BTNodeType.TASK
+	bt_node.type = AI.BTNodeType.TASK
 	var step = PlanStep.new()
 	step.step_type = PlanStep.STEP_TYPE.AIM_AT
 	bt_node.step = step
@@ -30,7 +30,7 @@ static func AimAt() :
 static func BroadCast(event) :
 	var bt_node = AI.BTNode.new()
 	bt_node.name = "AimAt"
-	bt_node.type = BTInfo.BTNodeType.TASK
+	bt_node.type = AI.BTNodeType.TASK
 	var step = PlanStep.new()
 	step.step_type = PlanStep.STEP_TYPE.BROADCAST
 	step.who = event
@@ -40,7 +40,7 @@ static func BroadCast(event) :
 static func Execute() :
 	var bt_node = AI.BTNode.new()
 	bt_node.name = "ExexuteStored"
-	bt_node.type = BTInfo.BTNodeType.TASK
+	bt_node.type = AI.BTNodeType.TASK
 	var step = PlanStep.new()
 	step.step_type = PlanStep.STEP_TYPE.EXECUTE_OBJ_ACTION_STORED
 	bt_node.step = step
@@ -49,7 +49,7 @@ static func Execute() :
 static func ExecuteNearbyByType(type) :
 	var bt_node = AI.BTNode.new()
 	bt_node.name = "ExexuteStored"
-	bt_node.type = BTInfo.BTNodeType.TASK
+	bt_node.type = AI.BTNodeType.TASK
 	var step = PlanStep.new()
 	step.step_type = PlanStep.STEP_TYPE.EXECUTE_OBJ_ACTION_BY_ACTION_TYPE
 	step.object_action_type = type
@@ -59,7 +59,7 @@ static func ExecuteNearbyByType(type) :
 static func ExecuteChAction(action) :
 	var bt_node = AI.BTNode.new()
 	bt_node.name = "ExexuteChAction"
-	bt_node.type = BTInfo.BTNodeType.TASK
+	bt_node.type = AI.BTNodeType.TASK
 	var step = PlanStep.new()
 	step.step_type = PlanStep.STEP_TYPE.EXECUTE_NPC_ACTION
 	step.player_action_id = action
@@ -69,7 +69,7 @@ static func ExecuteChAction(action) :
 static func QueryInventory(type: GLOBAL_DEFINITIONS.OBJECTS = GLOBAL_DEFINITIONS.OBJECTS.NONE) :
 	var bt_node = AI.BTNode.new()
 	bt_node.name = "QueryInventory"
-	bt_node.type = BTInfo.BTNodeType.TASK
+	bt_node.type = AI.BTNodeType.TASK
 	var step = PlanStep.new()
 	step.step_type = PlanStep.STEP_TYPE.QUERY_INVENTORY
 	step.obj_type = type
@@ -80,7 +80,7 @@ static func QueryInventory(type: GLOBAL_DEFINITIONS.OBJECTS = GLOBAL_DEFINITIONS
 static func QueryPerson(name, property) :
 	var bt_node = AI.BTNode.new()
 	bt_node.name = "QueryPerson"
-	bt_node.type = BTInfo.BTNodeType.TASK
+	bt_node.type = AI.BTNodeType.TASK
 	var step = PlanStep.new()
 	step.step_type = PlanStep.STEP_TYPE.QUERY_PERSON
 	step.who = name
@@ -91,7 +91,7 @@ static func QueryPerson(name, property) :
 static func QueryClose(type: GLOBAL_DEFINITIONS.OBJECTS = GLOBAL_DEFINITIONS.OBJECTS.NONE) :
 	var bt_node = AI.BTNode.new()
 	bt_node.name = "QueryClose"
-	bt_node.type = BTInfo.BTNodeType.TASK
+	bt_node.type = AI.BTNodeType.TASK
 	var step = PlanStep.new()
 	step.step_type = PlanStep.STEP_TYPE.QUERY_CLOSE
 	step.obj_type = type
@@ -101,7 +101,7 @@ static func QueryClose(type: GLOBAL_DEFINITIONS.OBJECTS = GLOBAL_DEFINITIONS.OBJ
 static func QueryUtility() :
 	var bt_node = AI.BTNode.new()
 	bt_node.name = "QueryUtility"
-	bt_node.type = BTInfo.BTNodeType.TASK
+	bt_node.type = AI.BTNodeType.TASK
 	var step = PlanStep.new()
 	step.step_type = PlanStep.STEP_TYPE.QUERY_ACTION_UITILITY
 	bt_node.step = step
@@ -110,7 +110,7 @@ static func QueryUtility() :
 static func QueryNavigation(loc_name) :
 	var bt_node = AI.BTNode.new()
 	bt_node.name = "QueryNavigation"
-	bt_node.type = BTInfo.BTNodeType.TASK
+	bt_node.type = AI.BTNodeType.TASK
 	var step = PlanStep.new()
 	step.step_type = PlanStep.STEP_TYPE.QUERY_NAVIGATION
 	step.location = LocationName.new()
@@ -121,7 +121,7 @@ static func QueryNavigation(loc_name) :
 static func ExecuteNavigation(should_run):
 	var bt_node = AI.BTNode.new()
 	bt_node.name = "ExecNavigation"
-	bt_node.type = BTInfo.BTNodeType.NAV
+	bt_node.type = AI.BTNodeType.NAV
 	var step = PlanStep.new()
 	step.should_run = should_run
 	bt_node.step = step
@@ -130,7 +130,7 @@ static func ExecuteNavigation(should_run):
 static func Equip(type: GLOBAL_DEFINITIONS.OBJECTS = GLOBAL_DEFINITIONS.OBJECTS.NONE) :
 	var bt_node = AI.BTNode.new()
 	bt_node.name = "Equip"
-	bt_node.type = BTInfo.BTNodeType.TASK
+	bt_node.type = AI.BTNodeType.TASK
 	var step = PlanStep.new()
 	step.step_type = PlanStep.STEP_TYPE.EQUIP
 	step.obj_type = type
@@ -140,7 +140,7 @@ static func Equip(type: GLOBAL_DEFINITIONS.OBJECTS = GLOBAL_DEFINITIONS.OBJECTS.
 static func UnEquip() :
 	var bt_node = AI.BTNode.new()
 	bt_node.name = "UnEquip"
-	bt_node.type = BTInfo.BTNodeType.TASK
+	bt_node.type = AI.BTNodeType.TASK
 	var step = PlanStep.new()
 	step.step_type = PlanStep.STEP_TYPE.UNEQUIP
 	bt_node.step = step
@@ -148,7 +148,7 @@ static func UnEquip() :
 
 static func Selector(steps):
 	var bt_node = AI.BTNode.new()
-	bt_node.type = BTInfo.BTNodeType.SELECTOR
+	bt_node.type = AI.BTNodeType.SELECTOR
 	for btstep in steps:
 		btstep.parent = bt_node
 		bt_node.children.append(btstep)
@@ -157,7 +157,7 @@ static func Selector(steps):
 
 static func Sequence(steps):
 	var bt_node = AI.BTNode.new()
-	bt_node.type = BTInfo.BTNodeType.SEQUENCE
+	bt_node.type = AI.BTNodeType.SEQUENCE
 	for btstep in steps:
 		btstep.parent = bt_node
 		bt_node.children.append(btstep)
@@ -166,7 +166,7 @@ static func Sequence(steps):
 
 static func Retry(btstep, amount):
 	var bt_node = AI.BTNode.new()
-	bt_node.type = BTInfo.BTNodeType.RETRY
+	bt_node.type = AI.BTNodeType.RETRY
 	bt_node.attempts = amount
 	btstep.parent = bt_node
 	bt_node.children.append(btstep)
