@@ -178,8 +178,10 @@ func update(player_position: Vector3, possible_obj_actions: Array, perceptions: 
 					current_event_idx = -1
 	
 	for perception in perceptions:
-		pass
-		#current_bt = IntManager.build_bt(perception, player)
+		var bt = InteractionRules.build_bt(perception, player)
+		if bt == null:
+			continue
+		current_bt = bt
 	return should_abort
 
 enum ProcessReturn {BRANCH_DONE, SUCCESS, FAILURE, WAIT}
