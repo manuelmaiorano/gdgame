@@ -62,8 +62,8 @@ class ActionInfo:
 
 class Perception:
 	var event: String
+	var params
 	var character
-	var victim
 	
 @onready var possible_actions: Array[ActionInfo] = []
 @onready var perceptions: Array[Perception] = []
@@ -256,7 +256,7 @@ func execute_step(step: PlanStep):
 					agent_input.shooting = true
 			return GLOBAL_DEFINITIONS.AI_FEEDBACK.DONE
 		PlanStep.STEP_TYPE.BROADCAST:
-			$InteractionAreas.broadcast(step.who)
+			$InteractionAreas.broadcast(step.who, step.params)
 			return GLOBAL_DEFINITIONS.AI_FEEDBACK.DONE
 		_:
 			return GLOBAL_DEFINITIONS.AI_FEEDBACK.DONE
@@ -601,10 +601,11 @@ func _on_inventory_item_changed(selected_idx):
 	inventory[selected_idx].object.equip()
 	equipped_item_idx = selected_idx
 
-func _on_character_event(ch, event):
+func _on_character_event(ch, event, params):
 	var perception = Perception.new()
 	perception.event = event
 	perception.character = ch
+	perception.params = params
 	perceptions.append(perception)
 
 @rpc("call_local")

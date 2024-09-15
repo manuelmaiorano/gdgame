@@ -27,13 +27,14 @@ static func AimAt() :
 	bt_node.step = step
 	return bt_node
 
-static func BroadCast(event) :
+static func BroadCast(event, params) :
 	var bt_node = AI.BTNode.new()
 	bt_node.name = "AimAt"
 	bt_node.type = AI.BTNodeType.TASK
 	var step = PlanStep.new()
 	step.step_type = PlanStep.STEP_TYPE.BROADCAST
 	step.who = event
+	step.params = params
 	bt_node.step = step
 	return bt_node
 
@@ -209,7 +210,7 @@ static func ShootPerson(name):
 	return Selector([
 		Sequence([
 			EquipObj(GLOBAL_DEFINITIONS.OBJECTS.PISTOL),
-			BroadCast("WitnessShooting"),
+			BroadCast("WitnessShooting", [name]),
 			Retry(
 				Sequence([
 					QueryPerson(name, "global_position"),
